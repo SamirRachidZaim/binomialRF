@@ -1,0 +1,215 @@
+---
+title: "binomialRF Feature Selection Vignette"
+author: "Samir Rachid Zaim"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+The $\textit{binomialRF}$ is a $\textit{randomForest}$ feature selection wrapper (Zaim 2019) that treats the random forest as a binomial process where each tree represents an iid bernoulli random variable for the event of selecting $X_j$ as the main splitting variable at a given tree. The algorithm below describes the technical aspects of the algorithm.
+
+\begin{algorithm} 
+\caption{binomialRF Feature Selection Algorithm } 
+\label{alg1} 
+\begin{algorithmic}
+  \For{i=1:N}
+    \State Grow $T_{i}$
+    \State $S_{ij} =   \left\{
+\begin{array}{ll}
+      1 & X_j \text{ is splitting variable at root node by } T_i \\
+      0 & \text{otherwise} \\
+ \end{array} 
+\right. $
+    \State $S \gets S_{ij}$
+  \EndFor
+  \State $S_j = \sum_{i=1}^N S_{ij}= \sum_{i=1}^N I[X_j \in root(T_i)]$
+  \State $S_j \sim \text{binomial}(N,p_0), \hspace{6mm} \text{where } p_0=\bigg(1 - \prod_{i=1}^m\frac{L-i}{L-(i-1)} \bigg)\frac{1}{m}$.
+  \State Test for Significance
+  \State Adjust for Multiple Comparisons
+
+\end{algorithmic}
+\end{algorithm}
+
+![binomialRF Algorithm.](algorithm.png)
+
+# Simulating Data
+Since $\textit{binomialRF}$ is a wrapper algorithm that internally calls and grows a randomForest object based on the inputted parameters. First we generate a simple simulated logistic data as follows: 
+
+* $X_{10}\sim MNV(0, I_{10})$, 
+
+
+* $p(x) = \frac{1}{1+e^{-X\beta}}$, and
+
+* $y \sim Binom(10,p)$.
+
+
+## Simulated Data
+
+```{r echo=T}
+set.seed(123)
+### Generate multivariate normal data in R10
+X = matrix(rnorm(1000), ncol=10)
+
+### let half of the coefficients be 0, the other be 10
+trueBeta= c(rep(10,5), rep(0,5))
+
+### do logistic transform and generate the labels
+z = 1 + X %*% trueBeta    
+pr = 1/(1+exp(-z))        
+y = rbinom(100,1,pr)
+
+```
+To generate data looking like this: 
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(cbind(round(X,2),y), 10))
+```
+
+# binomialRF Function Call
+
+```{r echo=T}
+
+binom.rf <- SMARTVIS::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 10000,percent_features = .3,
+                     fdr.method = 'BY')
+print(binom.rf)
+
+```
+
+# Tuning Parameters
+
+## Percent_features
+
+Note that since the binomial exact test is contingent on a test statistic measuring the likelihood of selecting a feature, if there is a dominant feature, then it will render all remaining 'important' features useless as it will always be selected as the splitting variable. Therefore it is important to select the $\textit{percent_features}$ parameter to be small (~ sqrt(p) or between 10-25%) so that at each tree we can successfully identify all important features. 
+
+If you're working in a low-dimensional space, with $\textit{L}$ features, then percent_features must be at least greater than $1/\textit{L}$. However, for optimal performance, percent_features will be increased to at least 3/L since otherwise when only 1 variable is selected at the splitting procedure, there is no binomial process since the single variable chosen is then the 'optimal' splitting variable. Therefore, consider setting percent_features to be equivalent to the mtry parameter in the randomForest to ensure that at least 2+ features are considered at each root node, but not large enough so that the same dominant feature gets chosen. 
+
+
+```{r echo=F}
+binom.rf <- SMARTVIS::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 10000,percent_features = 1,
+                     fdr.method = 'BY')
+
+binom.rf2 <- SMARTVIS::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 10000,percent_features = .8,
+                     fdr.method = 'BY')
+
+binom.rf3 <- SMARTVIS::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 10000,percent_features = .5,
+                     fdr.method = 'BY')
+
+binom.rf4 <- SMARTVIS::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 10000,percent_features = .3,
+                     fdr.method = 'BY')
+
+cat('\n\nbinomialRF 100%\n\n')
+print(binom.rf)
+
+cat('\n\nbinomialRF 80%\n\n')
+print(binom.rf2)
+
+cat('\n\nbinomialRF 50%\n\n')
+print(binom.rf3)
+
+cat('\n\nbinomialRF 30%\n\n')
+print(binom.rf4)
+```
+
+## ntrees
+
+We recommend growing at least 5-10k trees so that the algorithm has a chance to stabilize. Simulation studies show so far that ntrees ~ 10,000 yields satisfactory results. The ntrees tuning parameter must be set in conjunction with the percent_features as these two are inter-connected. 
+
+
+```{r echo=F}
+binom.rf <- SMARTVIS::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 1000,percent_features = .2,
+                     fdr.method = 'BY')
+
+binom.rf2 <- SMARTVIS::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 5000,percent_features = .2,
+                     fdr.method = 'BY')
+
+binom.rf3 <- SMARTVIS::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 10000,percent_features = .2,
+                     fdr.method = 'BY')
+
+binom.rf4 <- SMARTVIS::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 50000,percent_features = .2,
+                     fdr.method = 'BY')
+
+cat('\n\nbinomialRF 1000 trees\n\n')
+print(binom.rf)
+
+cat('\n\nbinomialRF 5000 trees \n\n')
+print(binom.rf2)
+
+cat('\n\nbinomialRF 10000 trees \n\n')
+print(binom.rf3)
+
+cat('\n\nbinomialRF 50000 trees\n\n')
+print(binom.rf4)
+```
+
+# Visualizations 
+
+Given that it may not always be apparent what model is ideal, a nested set of candidate models may be proposed. Consider a design matrix 
+
+$$X_{10}\sim MNV(0, I_{10})$$ 
+
+and suppose you would like to consider the following set of candidate models and choose which is the most likely or accurate model? 
+
+$X1 = \begin{bmatrix} X_1& X_4 & X_6 & X_9 \end{bmatrix}$ 
+
+$X2 = \begin{bmatrix} X_1 & X_2 &  X_3 & X_4 & X_6  &X_9 \end{bmatrix}$ 
+
+$X3 = \begin{bmatrix} X_3 & X_4 & X_5 & X_6 & X_7  &X_8 &X_9 &X_{10} \end{bmatrix}$ 
+
+$X4 = \begin{bmatrix} X_5 & X_6 & X_7  &X_8 &X_9 \end{bmatrix}$ 
+
+$X5 = \begin{bmatrix} X_4 & X_5  &X_8 &X_{10} \end{bmatrix}$ 
+
+$X6 = \begin{bmatrix} X_1 & X_2 &  X_3 & X_4 & X_5 & X_6 & X_7  &X_8 &X_9 &X_{10} \end{bmatrix}$ 
+
+
+
+
+Then, the following visualization assess each of them and weighs them by Out of Bag Error. 
+
+
+
+```{r echo=F, fig.width=6, fig.height=4, message=F, warning=F}
+require(data.table)
+
+ candidateModels <- list(
+       m1=c('X1','X4','X6','X9'),
+       m2=c(paste('X',c(1,2,3,4,6,9),sep='')),
+       m3=c(paste("X", 3:10,sep='')),
+       m4= c(paste("X", 5:9,sep='')),
+       m5= c(paste("X", c(4,5,8,10),sep='')),
+       m6= c(paste("X",1:10,sep=''))
+       )
+
+ a= SMARTVIS::evaluateCandidateModels(candidateModels, X,y,percent_features = .4, ntrees = 10000)
+
+```
+
+
+
+Equivalently, the information can be retrieved and analyzed via a tabular version of the model selection graph.
+
+
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(a)
+```
+

@@ -1,0 +1,23 @@
+Package: SMARTVIS
+Type: Package
+Title: Binomial Random Forest Feature Selection
+Version: 0.1.0
+Authors@R: person("Samir", "Rachid Zaim", email = "samirrachidzaim@email.arizona.edu",
+  role = c("aut", "cre"))
+Maintainer: Samir Rachid Zaim <samirrachidzaim@email.arizona.edu>
+URL: https://samirrachidzaim.github.io/
+Description: The binomialRF is a novel feature selection technique for decision trees that 
+    aims at providing more interpretive and statistically significant feature subsets using binomial
+    distributional assumptions. Treating each splitting variable selection as a binomial process,
+    binomialRF then tests whether a feature is selected more often than by random chance.
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Imports: randomForest, ggplot2, data.table
+Suggests: 
+    parallel,
+    foreach,
+    knitr,
+    rmarkdown
+RoxygenNote: 6.1.1
+VignetteBuilder: knitr
