@@ -25,8 +25,12 @@ evaluateCandidateModels <- function(candidateModels, X, y, ntrees=20000, percent
   library(ggplot2)
   library(data.table)
 
-  X = data.frame(X)
-  y = factor(y)
+  if(class(X) != 'data.frame'){
+    X = data.frame(X)
+  }
+  if(class(y) != 'factor'){
+    y = factor(y)
+  }
   dim.X = ncol(X)
 
   f <- function(i, candidateModels, X,y){
@@ -38,33 +42,55 @@ evaluateCandidateModels <- function(candidateModels, X, y, ntrees=20000, percent
   candidateList = lapply(1:length(candidateModels), function(i) f(i, candidateModels, X,y) )
   numModels <- length(candidateList)
 
-  err.mat= data.frame(Variable= character(dim.X*numModels),
-                      Significant=logical(dim.X*numModels),
-                      weight=numeric(dim.X*numModels),
-                      model=t(do.call(cbind, lapply(1:numModels, function(x) t(rep(paste('m',x,sep=''),dim.X))))),
-                      stringsAsFactors = F)
+  # err.mat= data.frame(Variable= character(dim.X*numModels),
+  #                     Significant=logical(dim.X*numModels),
+  #                     weight=numeric(dim.X*numModels),
+  #                     model=t(do.call(cbind, lapply(1:numModels, function(x) t(rep(paste('m',x,sep=''),dim.X))))),
+  #                     stringsAsFactors = F)
+
+#
+#   i=0
+#   for(model in candidateList){
+#     a = ((i*10)+1)
+#     err.mat[a:(a+nrow(model)-1),1:3] <- model[, c('Variable','Significant','weight')]
+#     i=i+1
+#   }
+
+  new.err.mat <- do.call(rbind, candidateList)
+
+  models <- unlist(sapply(1:length(candidateList), function(X) rep(paste('m',X,sep=''), nrow(candidateList[[X]])))  )
+
+  new.err.mat$model <- models
+  new.err.mat$Norm.Weight = new.err.mat$weight / sum(unique(new.err.mat$weight))
+  new.err.mat <- new.err.mat[order(new.err.mat$Norm.Weight,decreasing=TRUE), ]
 
 
-  i=0
-  for(model in candidateList){
-    a = ((i*10)+1)
-    err.mat[a:(a+nrow(model)-1),1:3] <- model[, c('Variable','Significant','weight')]
-    i=i+1
-  }
 
-  err.mat$Significant = as.numeric(err.mat$Significant)
-  err.mat$Norm.Weight = err.mat$weight / sum(unique(err.mat$weight))
-  err.mat$Significant = as.logical(err.mat$Significant)
-  err.mat= err.mat[err.mat$Variable!='',]
-  w= round(unique(err.mat$Norm.Weight),3)
-  err.mat$Variable <- factor(err.mat$Variable, levels = names(data.frame(X))[c(1:10)])
+  # err.mat$Significant = as.numeric(err.mat$Significant)
+  # err.mat$Norm.Weight = err.mat$weight / sum(unique(err.mat$weight))
+  # err.mat$Significant = as.logical(err.mat$Significant)
+  # err.mat= err.mat[err.mat$Variable!='',]
+  # w= round(unique(err.mat$Norm.Weight),3)
+  # err.mat$Variable <- factor(err.mat$Variable, levels = names(data.frame(X))[c(1:10)])
 
 
-  err.mat_weighted <- err.mat[order(err.mat$Norm.Weight,decreasing=TRUE), ]
-  err.mat_weighted$model <- factor(err.mat_weighted$model, levels = unique(err.mat_weighted$model))
-  err.mat_weighted$Variable <- factor(err.mat_weighted$Variable, levels = names(data.frame(X)))
+  # err.mat_weighted <- err.mat[order(err.mat$Norm.Weight,decreasing=TRUE), ]
+  # err.mat_weighted$model <- factor(err.mat_weighted$model, levels = unique(err.mat_weighted$model))
+  # err.mat_weighted$Variable <- factor(err.mat_weighted$Variable, levels = names(data.frame(X)))
 
-  plt = ggplot(data=err.mat_weighted, aes(x=model, y=Variable,  fill=Significant, width=Norm.Weight)) +
+  # plt = ggplot(data=err.mat_weighted, aes(x=model, y=Variable,  fill=Significant, width=Norm.Weight)) +
+  #   geom_tile(inherit.aes = F , aes(x=model,y=Variable,fill=Significant, width=Norm.Weight), position = position_identity())+
+  #   theme_minimal()+ labs(title='Feature Selection by Model',
+  #                         x='Likeliest Candidate Model (OOB Error)',
+  #                         y='Feature',
+  #                         fill="Significant")+
+  #   theme(
+  #     plot.title = element_text(color="red", size=20, face="bold.italic"),
+  #     axis.title.x = element_text(color="blue", size=14, face="bold"),
+  #     axis.title.y = element_text(color="#993333", size=14, face="bold")
+  #   )
+
+  plt = ggplot(data=new.err.mat, aes(x=model, y=Variable,  fill=Significant, width=Norm.Weight)) +
     geom_tile(inherit.aes = F , aes(x=model,y=Variable,fill=Significant, width=Norm.Weight), position = position_identity())+
     theme_minimal()+ labs(title='Feature Selection by Model',
                           x='Likeliest Candidate Model (OOB Error)',
@@ -76,6 +102,7 @@ evaluateCandidateModels <- function(candidateModels, X, y, ntrees=20000, percent
       axis.title.y = element_text(color="#993333", size=14, face="bold")
     )
 
+  err.mat <- new.err.mat
 
   err.mat=data.table::data.table(err.mat)
   setkey(err.mat, model)
@@ -84,6 +111,7 @@ evaluateCandidateModels <- function(candidateModels, X, y, ntrees=20000, percent
 
   err.mat$Significant=as.numeric(err.mat$Significant)
   err.mat$Significant.Weight = err.mat$Significant* err.mat$Norm.Weight
+  w= round(unique(err.mat$Norm.Weight),3)
 
 
   err.mat = dcast(err.mat, formula = Variable ~ model)
@@ -95,10 +123,13 @@ evaluateCandidateModels <- function(candidateModels, X, y, ntrees=20000, percent
     n1/n2
   }
 
-  err.mat$Prop.Selected = sapply(1:dim.X, function(x) prop.selected(err.mat[x, 2:(numModels-1)]))
+  err.mat$Prop.Selected = sapply(1:nrow(err.mat), function(x) prop.selected(err.mat[x, 2:ncol(err.mat)]))
   err.mat <- err.mat[, c('Variable','Prop.Selected', paste('m',1:numModels, sep='')), with=F]
   err.mat[, 2:length(err.mat)] <- round(err.mat[, 2:ncol(err.mat)],3)
   err.mat = err.mat[order(err.mat$Variable),]
+
+  err.mat <- err.mat[order(err.mat$Prop.Selected, decreasing = T),]
+
 
 
   ### organize table
@@ -107,6 +138,7 @@ evaluateCandidateModels <- function(candidateModels, X, y, ntrees=20000, percent
   err.mat =rbind(err.mat,b,a )
   err.mat = err.mat[, c(1:2, order(a,decreasing = T)), with=F]
   err.mat = err.mat[, unique(names(err.mat)), with=F]
+
 
   return(err.mat)
 }

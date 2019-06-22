@@ -15,7 +15,7 @@
 #'
 #' @return a data.frame with 4 columns: Feature Name, Frequency Selected, Probability of Selecting it randomly, Adjusted P-value based on \code{fdr.method}
 
-k.binomialRF <- function(X,y , fdr.threshold=.0001, fdr.method='BH', ntrees=500, percent_features=floor(sqrt(ncol(X))), keep.rf =F, K=2){
+k.binomialRF <- function(X,y , fdr.threshold=.0001, fdr.method='BH', ntrees=500, percent_features=sqrt(ncol(X)), keep.rf =F, K=2){
   require(randomForest)
 
   if(class(ntrees) != 'numeric' | class(percent_features)!= "numeric" | class(fdr.threshold)!= 'numeric'){
@@ -85,9 +85,11 @@ k.binomialRF <- function(X,y , fdr.threshold=.0001, fdr.method='BH', ntrees=500,
 
     final.nodes <- (2^(K-1)):(2^K-1)
 
-    interactions <- lapply(final.nodes, function(x) paste('X',sort(Tree[climbToRoot(final.node=x, Tree,K),'split var']),sep=''))
+    interactions <- lapply(final.nodes, function(x) nms[sort(Tree[climbToRoot(final.node=x, Tree,K),'split var'])])
+    pruned.interactions <- lapply(interactions, function(x) if(length(x)==K){return(x)})
 
-    return(interactions)
+
+    return(pruned.interactions)
   }
 
 
@@ -99,8 +101,10 @@ k.binomialRF <- function(X,y , fdr.threshold=.0001, fdr.method='BH', ntrees=500,
 
   interaction.list <- data.table(interaction.list)
 
-  interaction.list <- interaction.list[interaction.list$V1!='X0',]
-  interaction.list$Interaction <- paste(interaction.list$V1,interaction.list$V2, interaction.list$V3, sep='|')
+
+  #interaction.list <- interaction.list[interaction.list$V1!='X0',]
+
+  interaction.list$Interaction <- do.call(paste, c(interaction.list, sep=" ⊗ "))
 
   sum.list <- interaction.list[, .N , by =Interaction]
   sum.list$Pvalue <- as.numeric(sapply(sum.list$N, function(x) binom.test(x, n= ntrees, p, alternative='greater')$p.value))

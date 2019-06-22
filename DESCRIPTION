@@ -1,4 +1,4 @@
-Package: SMARTVIS
+Package: binomialRF
 Type: Package
 Title: Binomial Random Forest Feature Selection
 Version: 0.1.0
