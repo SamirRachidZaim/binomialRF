@@ -1,14 +1,33 @@
 #' a binomialRf visualization for feature selection
 #'
-#' \code{evaluateCandidateModels} experimental section on plotting feature selection
+#' \code{binomialRF_modelAveraging} experimental section on plotting feature selection
 #'
 #' @param candidateModels takes as input a list of candidate models by specifying which predictors you want to consider for each model as a string of vector names
 #' @param X the design matrix X of predictors.
 #' @param y the outcome y as a factor variable.
-#'
+#' @param ntrees how many trees should be used to grow the \code{randomForest}? (Defaults to 5000)
+#' @param percent_features what percentage of L do we subsample at each tree? Should be a proportion between (0,1)
 #' @return a ggplot2 object comparison of different models
 
 #' @examples
+#' #' set.seed(324)
+#' require(randomForest)
+#' require(ggplot2)
+#'
+#' ###############################
+#' ### Generate simulation data
+#' ###############################
+#'
+#' X = matrix(rnorm(1000), ncol=10)
+#' trueBeta= c(rep(10,5), rep(0,5))
+#' z = 1 + X %*% trueBeta
+#' pr = 1/(1+exp(-z))
+#' y = rbinom(100,1,pr)
+#'
+#' ###############################
+#' ### Run model averaging
+#' ###############################
+#'
 #' candidateModels <- list(
 #'       m1=c('X1','X4','X6','X9'),
 #'       m2=c(paste('X',c(1,2,3,4,6,9),sep='')),
@@ -18,43 +37,26 @@
 #'       m6= c(paste("X",1:10,sep=''))
 #'       )
 #'
-#' evaluateCandidateModels(candidateModels, X,y)
+#' binomialRF_modelAveraging(candidateModels, X,y)
 
-evaluateCandidateModels <- function(candidateModels, X, y, ntrees=20000, percent_features=.2){
-  library(dplyr)
-  library(ggplot2)
-  library(data.table)
+binomialRF_modelAveraging <- function(candidateModels, X, y, ntrees=20000, percent_features=.2){
 
-  if(class(X) != 'data.frame'){
+  if( !is.data.frame(X) ){
     X = data.frame(X)
   }
-  if(class(y) != 'factor'){
+  if(!is.factor(y)){
     y = factor(y)
   }
   dim.X = ncol(X)
 
   f <- function(i, candidateModels, X,y){
-    d= binomialRF(X[, candidateModels[[i]]], factor(y), percent_features = percent_features, ntrees = ntrees)
+    d= binomialRF::binomialRF(X[, candidateModels[[i]]], factor(y), percent_features = percent_features, ntrees = ntrees)
     d$model = names(candidateModels)[i]
     return(d)
   }
 
   candidateList = lapply(1:length(candidateModels), function(i) f(i, candidateModels, X,y) )
   numModels <- length(candidateList)
-
-  # err.mat= data.frame(Variable= character(dim.X*numModels),
-  #                     Significant=logical(dim.X*numModels),
-  #                     weight=numeric(dim.X*numModels),
-  #                     model=t(do.call(cbind, lapply(1:numModels, function(x) t(rep(paste('m',x,sep=''),dim.X))))),
-  #                     stringsAsFactors = F)
-
-#
-#   i=0
-#   for(model in candidateList){
-#     a = ((i*10)+1)
-#     err.mat[a:(a+nrow(model)-1),1:3] <- model[, c('Variable','Significant','weight')]
-#     i=i+1
-#   }
 
   new.err.mat <- do.call(rbind, candidateList)
 
@@ -90,54 +92,53 @@ evaluateCandidateModels <- function(candidateModels, X, y, ntrees=20000, percent
   #     axis.title.y = element_text(color="#993333", size=14, face="bold")
   #   )
 
-  plt = ggplot(data=new.err.mat, aes(x=model, y=Variable,  fill=Significant, width=Norm.Weight)) +
-    geom_tile(inherit.aes = F , aes(x=model,y=Variable,fill=Significant, width=Norm.Weight), position = position_identity())+
-    theme_minimal()+ labs(title='Feature Selection by Model',
+  plt = ggplot2::ggplot(data=new.err.mat, ggplot2::aes(x=new.err.mat$model, y=new.err.mat$Variable,  fill=new.err.mat$Significant)) +
+    ggplot2::geom_tile(inherit.aes = FALSE , ggplot2::aes(x=new.err.mat$model,y=new.err.mat$Variable,fill=new.err.mat$Significant), position = ggplot2::position_identity())+
+    ggplot2::theme_minimal()+ ggplot2::labs(title='Feature Selection by Model',
                           x='Likeliest Candidate Model (OOB Error)',
                           y='Feature',
                           fill="Significant")+
-    theme(
-      plot.title = element_text(color="red", size=20, face="bold.italic"),
-      axis.title.x = element_text(color="blue", size=14, face="bold"),
-      axis.title.y = element_text(color="#993333", size=14, face="bold")
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(color="red", size=20, face="bold.italic"),
+      axis.title.x = ggplot2::element_text(color="blue", size=14, face="bold"),
+      axis.title.y = ggplot2::element_text(color="#993333", size=14, face="bold")
     )
 
   err.mat <- new.err.mat
 
   err.mat=data.table::data.table(err.mat)
-  setkey(err.mat, model)
+  # data.table::setkey(err.mat, model)
 
   print(plt)
 
   err.mat$Significant=as.numeric(err.mat$Significant)
-  err.mat$Significant.Weight = err.mat$Significant* err.mat$Norm.Weight
+  err.mat$Significant.Weight = err.mat$Significant
   w= round(unique(err.mat$Norm.Weight),3)
 
 
-  err.mat = dcast(err.mat, formula = Variable ~ model)
-
+  err.mat = data.table::dcast(err.mat, formula = Variable ~ model)
 
   prop.selected = function(row.vals){
-    n1 = sum(row.vals>0,na.rm = T)
+    n1 = sum(row.vals>0,na.rm = TRUE)
     n2 = sum(!is.na(row.vals))
     n1/n2
   }
 
   err.mat$Prop.Selected = sapply(1:nrow(err.mat), function(x) prop.selected(err.mat[x, 2:ncol(err.mat)]))
-  err.mat <- err.mat[, c('Variable','Prop.Selected', paste('m',1:numModels, sep='')), with=F]
+  err.mat <- err.mat[, c('Variable','Prop.Selected', paste('m',1:numModels, sep='')), with=FALSE]
   err.mat[, 2:length(err.mat)] <- round(err.mat[, 2:ncol(err.mat)],3)
   err.mat = err.mat[order(err.mat$Variable),]
 
-  err.mat <- err.mat[order(err.mat$Prop.Selected, decreasing = T),]
+  err.mat <- err.mat[order(err.mat$Prop.Selected, decreasing = TRUE),]
+  err.mat[is.na(err.mat)] <- ''
 
 
-
-  ### organize table
-  a = data.frame(t(data.table(c('OOB_Weight','',w)))); colnames(a) <- c('Variable','Prop.Selected', paste('m','',1:numModels, sep=''))
-  b = data.frame(t(data.table(c(rep('',(numModels+2)))))); colnames(b) <- c('Variable', 'Prop.Selected', paste('m',1:numModels, sep=''))
-  err.mat =rbind(err.mat,b,a )
-  err.mat = err.mat[, c(1:2, order(a,decreasing = T)), with=F]
-  err.mat = err.mat[, unique(names(err.mat)), with=F]
+  # ### organize table
+  # a = data.frame(t(e(c('OOB_Weight','',w)))); colnames(a) <- c('Variable','Prop.Selected', paste('m','',1:numModels, sep=''))
+  # b = data.frame(t(e(c(rep('',(numModels+2)))))); colnames(b) <- c('Variable', 'Prop.Selected', paste('m',1:numModels, sep=''))
+  # err.mat =rbind(err.mat,b,a )
+  # err.mat = err.mat[, c(1:2, order(a,decreasing = T)), with=F]
+  # err.mat = err.mat[, unique(names(err.mat)), with=F]
 
 
   return(err.mat)

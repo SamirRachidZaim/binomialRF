@@ -13,7 +13,8 @@ Description: The binomialRF is a novel feature selection technique for decision 
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-Imports: randomForest, ggplot2, data.table
+biocViews: Software, GenePrediction, StatisticalMethod, DecisionTree,  DimensionReduction, ExperimentalDesign
+Imports: randomForest, ggplot2, data.table, stats, rlist
 Suggests: 
     parallel,
     foreach,
