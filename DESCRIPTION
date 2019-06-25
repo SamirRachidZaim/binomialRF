@@ -1,7 +1,7 @@
 Package: binomialRF
 Type: Package
 Title: Binomial Random Forest Feature Selection
-Version: 0.1.1
+Version: 0.99.0
 Authors@R: person("Samir", "Rachid Zaim", email = "samirrachidzaim@email.arizona.edu",
   role = c("aut", "cre"))
 Maintainer: Samir Rachid Zaim <samirrachidzaim@email.arizona.edu>
