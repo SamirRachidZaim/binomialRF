@@ -6,7 +6,7 @@ Authors@R: person("Samir", "Rachid Zaim", email = "samirrachidzaim@email.arizona
   role = c("aut", "cre"))
 Maintainer: Samir Rachid Zaim <samirrachidzaim@email.arizona.edu>
 URL: https://samirrachidzaim.github.io/
-Description: The binomialRF is a novel feature selection technique for decision trees that 
+Description: The binomialRF is a new feature selection technique for decision trees that 
     aims at providing more interpretive and statistically significant feature subsets using binomial
     distributional assumptions. Treating each splitting variable selection as a binomial process,
     binomialRF then tests whether a feature is selected more often than by random chance.
