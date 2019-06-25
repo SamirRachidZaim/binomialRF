@@ -10,7 +10,11 @@ To install from GitHub directly, follow the code instructions below!
 
 ```
 install.packages("devtools")
-#It may be necessary to install required as not all package dependencies are installed by devtools:
+
+
+# The following dependencies might need to be installed
+# manually if they're not installed by devtools. 
+
 install.packages(c("ggplot2", "randomForest", "data.table","rlist"))
 devtools::install_github("SamirRachidZaim/binomialRF")
 library(binomialRF)
