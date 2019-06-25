@@ -22,7 +22,7 @@ library(binomialRF)
 
 # Installing from BioConductor
 
-Alternatively, the binomialRF R package has been submitted to BioConductor, upon availability, you will be able to install as follows: 
+Alternatively, the binomialRF R package has been submitted to BioConductor, and, upon availability, you will be able to install as follows: 
 
 ```
 BiocManager::install("binomialRF")
