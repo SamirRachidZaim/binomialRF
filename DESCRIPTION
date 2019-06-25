@@ -1,10 +1,9 @@
 Package: binomialRF
 Type: Package
 Title: Binomial Random Forest Feature Selection
-Version: 0.99.0
+Version: 0.99.1
 Authors@R: person("Samir", "Rachid Zaim", email = "samirrachidzaim@email.arizona.edu",
   role = c("aut", "cre"))
-Maintainer: Samir Rachid Zaim <samirrachidzaim@email.arizona.edu>
 URL: https://samirrachidzaim.github.io/
 Description: The binomialRF is a new feature selection technique for decision trees that 
     aims at providing more interpretive and statistically significant feature subsets using binomial
