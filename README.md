@@ -15,7 +15,7 @@ install.packages("devtools")
 # The following dependencies might need to be installed
 # manually if they're not installed by devtools. 
 
-install.packages(c("ggplot2", "randomForest", "data.table","rlist"))
+install.packages(c("ggplot2", "randomForest", "data.table","rlist", "correlbinom"))
 devtools::install_github("SamirRachidZaim/binomialRF")
 library(binomialRF)
 ```
