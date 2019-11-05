@@ -20,13 +20,12 @@ devtools::install_github("SamirRachidZaim/binomialRF")
 library(binomialRF)
 ```
 
-# Installing from BioConductor
+# Installing from CRAN
 
-Alternatively, the binomialRF R package has been submitted to BioConductor, and, upon availability, you will be able to install as follows: 
+Alternatively, the binomialRF R package has been submitted to CRAN, and, upon availability, you will be able to install as follows: 
 
 ```
-BiocManager::install("binomialRF")
-
+install.packages('binomialRF')
 ```
 
 # References: 
