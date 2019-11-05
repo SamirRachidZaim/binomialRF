@@ -37,6 +37,8 @@
 #'                           fdr.method = 'BY', K=2)
 #'
 #' print(K.binom.rf)
+#' @export
+
 
 k_binomialRF <- function(X,y , fdr.threshold=.0001, fdr.method='BH', ntrees=500, percent_features=sqrt(ncol(X)), keep.rf =FALSE, K=2){
 

@@ -1,6 +1,6 @@
-#' a binomialRf visualization for feature selection
+#' a binomialRF_ensemble visualization and analysis for feature selection
 #'
-#' \code{binomialRF_modelAveraging} experimental section on plotting feature selection
+#' \code{binomialRF_ensemble} experimental section on plotting feature selection
 #'
 #' @param candidateModels takes as input a list of candidate models by specifying which predictors you want to consider for each model as a string of vector names
 #' @param X the design matrix X of predictors.
@@ -37,9 +37,9 @@
 #'       m6= c(paste("X",1:10,sep=''))
 #'       )
 #'
-#' binomialRF_modelAveraging(candidateModels, X,y)
+#' binomialRF_ensemble(candidateModels, X,y)
 
-binomialRF_modelAveraging <- function(candidateModels, X, y, ntrees=20000, percent_features=.2){
+.binomialRF_ensemble <- function(candidateModels, X, y, ntrees=20000, percent_features=.2, PLOT=F){
 
   if( !is.data.frame(X) ){
     X = data.frame(X)
@@ -92,24 +92,29 @@ binomialRF_modelAveraging <- function(candidateModels, X, y, ntrees=20000, perce
   #     axis.title.y = element_text(color="#993333", size=14, face="bold")
   #   )
 
-  plt = ggplot2::ggplot(data=new.err.mat, ggplot2::aes(x=new.err.mat$model, y=new.err.mat$Variable,  fill=new.err.mat$Significant)) +
-    ggplot2::geom_tile(inherit.aes = FALSE , ggplot2::aes(x=new.err.mat$model,y=new.err.mat$Variable,fill=new.err.mat$Significant), position = ggplot2::position_identity())+
-    ggplot2::theme_minimal()+ ggplot2::labs(title='Feature Selection by Model',
-                          x='Likeliest Candidate Model (OOB Error)',
-                          y='Feature',
-                          fill="Significant")+
-    ggplot2::theme(
-      plot.title = ggplot2::element_text(color="red", size=20, face="bold.italic"),
-      axis.title.x = ggplot2::element_text(color="blue", size=14, face="bold"),
-      axis.title.y = ggplot2::element_text(color="#993333", size=14, face="bold")
-    )
+  if(PLOT){
+    
+    plt = ggplot2::ggplot(data=new.err.mat, ggplot2::aes(x=new.err.mat$model, y=new.err.mat$Variable,  fill=new.err.mat$Significant)) +
+      ggplot2::geom_tile(inherit.aes = FALSE , ggplot2::aes(x=new.err.mat$model,y=new.err.mat$Variable,fill=new.err.mat$Significant), position = ggplot2::position_identity())+
+      ggplot2::theme_minimal()+ ggplot2::labs(title='Feature Selection by Model',
+                                              x='Likeliest Candidate Model (OOB Error)',
+                                              y='Feature',
+                                              fill="Significant")+
+      ggplot2::theme(
+        plot.title = ggplot2::element_text(color="red", size=20, face="bold.italic"),
+        axis.title.x = ggplot2::element_text(color="blue", size=14, face="bold"),
+        axis.title.y = ggplot2::element_text(color="#993333", size=14, face="bold")
+      )
+    
+    print(plt)
+    
+  }
 
   err.mat <- new.err.mat
 
   err.mat=data.table::data.table(err.mat)
   # data.table::setkey(err.mat, model)
 
-  print(plt)
 
   err.mat$Significant=as.numeric(err.mat$Significant)
   err.mat$Significant.Weight = err.mat$Significant

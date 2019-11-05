@@ -7,14 +7,14 @@ Authors@R: person("Samir", "Rachid Zaim", email = "samirrachidzaim@email.arizona
 URL: https://samirrachidzaim.github.io/
 Description: The binomialRF is a new feature selection technique for decision trees that 
     aims at providing more interpretive and statistically significant feature subsets using binomial
-    distributional assumptions. Treating each splitting variable selection as a binomial process,
+    distributional assumptions. Treating each splitting variable selection as a set of exchangeable correlated bernoulli trials,
     binomialRF then tests whether a feature is selected more often than by random chance. 
 References: https://doi.org/10.1101/681973
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
 biocViews: Software, GenePrediction, StatisticalMethod, DecisionTree,  DimensionReduction, ExperimentalDesign
-Imports: randomForest, ggplot2, data.table, stats, rlist
+Imports: randomForest, ggplot2, data.table, stats, rlist, correlbinom
 Suggests: 
     parallel,
     foreach,

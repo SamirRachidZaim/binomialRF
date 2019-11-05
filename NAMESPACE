@@ -1,4 +1,5 @@
 exportPattern("^[[:alpha:]]+")
+exportPattern("^[^\\.]")
 import(randomForest)
 import(rlist)
 import(data.table)

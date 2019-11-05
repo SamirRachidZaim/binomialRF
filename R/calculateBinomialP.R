@@ -11,7 +11,7 @@
 #' @examples
 #' calculateBinomialP(110, .4)
 #' calculateBinomialP(13200, .5)
-#'
+
 calculateBinomialP <- function(L, percent_features){
 
   if(!is.numeric(L) | !is.numeric(percent_features)){
@@ -42,6 +42,9 @@ calculateBinomialP <- function(L, percent_features){
 #' calculateBinomialP_Interaction(110, .4, K=2)
 #' calculateBinomialP_Interaction(13200, .5, K=2)
 #'
+#'
+#' @export
+
 calculateBinomialP_Interaction <- function(L, percent_features, K=2){
 
   if(!is.numeric(L) | !is.numeric(percent_features)){

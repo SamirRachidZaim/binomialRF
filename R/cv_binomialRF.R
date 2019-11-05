@@ -37,7 +37,7 @@
 #'
 #' print(binom.rf)
 
-cv_binomialRF <- function(X,y, cvFolds=5, fdr.threshold=.05, fdr.method='BH', ntrees=1000, percent_features=.5, keep.rf =FALSE){
+.cv_binomialRF <- function(X,y, cvFolds=5, fdr.threshold=.05, fdr.method='BH', ntrees=1000, percent_features=.5, keep.rf =FALSE){
   requireNamespace('randomForest')
   requireNamespace('data.table')
   requireNamespace('stats')
