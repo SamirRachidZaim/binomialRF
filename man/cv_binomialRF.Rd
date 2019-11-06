@@ -4,9 +4,8 @@
 \alias{cv_binomialRF}
 \title{random forest feature selection based on binomial exact test}
 \usage{
-cv_binomialRF(X, y, cvFolds = 5, fdr.threshold = 0.05,
-  fdr.method = "BH", ntrees = 1000, percent_features = 0.5,
-  keep.rf = FALSE)
+cv_binomialRF(X,y, cvFolds=5, fdr.threshold = .05,
+                       fdr.method = 'BY',  ntrees = 2000,keep.rf=FALSE)
 }
 \arguments{
 \item{X}{design matrix}
@@ -20,8 +19,6 @@ cv_binomialRF(X, y, cvFolds = 5, fdr.threshold = 0.05,
 \item{fdr.method}{how should we adjust for multiple comparisons (i.e., \code{p.adjust.methods} =c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"))}
 
 \item{ntrees}{how many trees should be used to grow the \code{randomForest}? (Defaults to 5000)}
-
-\item{percent_features}{what percentage of L do we subsample at each tree? Should be a proportion between (0,1)}
 
 \item{keep.rf}{should we keep the randomForest object?}
 }
@@ -42,15 +39,14 @@ X = matrix(rnorm(1000), ncol=10)
 trueBeta= c(rep(10,5), rep(0,5))
 z = 1 + X \%*\% trueBeta
 pr = 1/(1+exp(-z))
-y = rbinom(100,1,pr)
+y = as.factor(rbinom(100,1,pr))
 
 ###############################
-### Run model averaging
+### Run cross-validation
 ###############################
 
-binom.rf <-cv_binomialRF(X,factor(y), cvFolds=5, fdr.threshold = .05,
-                      ntrees = 10000,percent_features = .3,
-                      fdr.method = 'BY')
+binom.rf <-cv_binomialRF(X,y, cvFolds=5, fdr.threshold = .05,
+                      fdr.method = 'BY',  ntrees = 2000,keep.rf=FALSE)
 
 print(binom.rf)
 }

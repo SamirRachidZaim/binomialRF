@@ -4,8 +4,8 @@
 \alias{binomialRF}
 \title{random forest feature selection based on binomial exact test}
 \usage{
-binomialRF(X, y, fdr.threshold = 0.05, fdr.method = "BH",
-  ntrees = 5000, percent_features = 0.2, keep.rf = FALSE)
+binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY', ntrees = 2000,
+       percent_features = .5, keep.rf=FALSE, user_cbinom_dist=NULL)
 }
 \arguments{
 \item{X}{design matrix}
@@ -16,11 +16,13 @@ binomialRF(X, y, fdr.threshold = 0.05, fdr.method = "BH",
 
 \item{fdr.method}{how should we adjust for multiple comparisons (i.e., \code{p.adjust.methods} =c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"))}
 
-\item{ntrees}{how many trees should be used to grow the \code{randomForest}? (Defaults to 5000)}
+\item{ntrees}{how many trees should be used to grow the \code{randomForest}?}
 
 \item{percent_features}{what percentage of L do we subsample at each tree? Should be a proportion between (0,1)}
 
 \item{keep.rf}{should we keep the randomForest object?}
+
+\item{user_cbinom_dist}{insert either a pre-specified correlated binomial distribution or calculate one via the R package \code{correlbinom}.}
 }
 \value{
 a data.frame with 4 columns: Feature Name, Frequency Selected, Probability of Selecting it randomly, Adjusted P-value based on \code{fdr.method}
@@ -39,15 +41,15 @@ X = matrix(rnorm(1000), ncol=10)
 trueBeta= c(rep(10,5), rep(0,5))
 z = 1 + X \%*\% trueBeta
 pr = 1/(1+exp(-z))
-y = rbinom(100,1,pr)
+y = as.factor(rbinom(100,1,pr))
 
 ###############################
-### Run model averaging
+### Run binomialRF
 ###############################
 
-binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,
-                      ntrees = 10000,percent_features = .3,
-                      fdr.method = 'BY')
+binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,fdr.method = 'BY',
+                      ntrees = 2000,percent_features = .5,
+                      keep.rf=FALSE, user_cbinom_dist=NULL)
 
 print(binom.rf)
 }

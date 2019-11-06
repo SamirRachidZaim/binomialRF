@@ -21,5 +21,4 @@ should be, L= Total number of features in X, and percent_features= what percent 
 \examples{
 calculateBinomialP(110, .4)
 calculateBinomialP(13200, .5)
-
 }
