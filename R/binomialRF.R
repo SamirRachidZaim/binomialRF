@@ -9,7 +9,7 @@
 #' @param ntrees how many trees should be used to grow the \code{randomForest}? (Defaults to 5000)
 #' @param percent_features what percentage of L do we subsample at each tree? Should be a proportion between (0,1)
 #' @param keep.rf should we keep the randomForest object?
-#' @param cbinom_dist insert either a pre-specified correlated binomial distribution or calculate one via the R package \code{correlbinom}.
+#' @param user_cbinom_dist insert either a pre-specified correlated binomial distribution or calculate one via the R package \code{correlbinom}.
 #'
 #' @references Zaim, SZ; Kenost, C.; Lussier, YA; Zhang, HH. binomialRF: Scalable Feature Selection and Screening for Random Forests to Identify Biomarkers and Their Interactions, bioRxiv, 2019.
 #'
@@ -33,14 +33,14 @@
 #' ###############################
 #'
 #' binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,
-#'                       ntrees = 10000,percent_features = .3,
-#'                       fdr.method = 'BY')
+#'                       ntrees = 2000,percent_features = .5,
+#'                       fdr.method = 'BY',user_cbinom_dist=NULL)
 #'
 #' print(binom.rf)
 #' @export
 
 
-binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='bonferroni', ntrees=1000, percent_features=.5, keep.rf =FALSE, cbinom_dist=NULL){
+binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, percent_features=.5, keep.rf =FALSE, user_cbinom_dist=NULL){
 
   if(!is.numeric(ntrees)  | !is.numeric(percent_features)| !is.numeric(fdr.threshold)){
     stop("Error: threshold, ntrees, and percent_features should be numeric inputs")
@@ -54,6 +54,33 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='bonferroni', ntrees=
     stop('keep.rf must be a boolean value. Set to T or F')
   } else if(fdr.threshold >1 | fdr.threshold <0){
     stop("fdr.threshold is outside the acceptable (0-1) range")
+  }
+  
+  if(is.null(user_cbinom_dist)){
+    if(ntrees==500 & ncol(X)==10){
+      cbinom_dist = pmf_list$prob0.1$pmf_N500_Rho63
+    } else if(ntrees==1000 & ncol(X)==10){
+      cbinom_dist = pmf_list$prob0.1$pmf_N1000_Rho63
+    } else if(ntrees==2000 & ncol(X)==10){
+      cbinom_dist = pmf_list$prob0.1$pmf_N2000_Rho63
+    } else if(ntrees==500 & ncol(X)==100){
+      cbinom_dist = pmf_list$prob0.1$pmf_N500_Rho63
+    } else if(ntrees==1000 & ncol(X)==100){
+      cbinom_dist = pmf_list$prob0.1$pmf_N1000_Rho63
+    } else if(ntrees==2000 & ncol(X)==100){
+      cbinom_dist = pmf_list$prob0.1$pmf_N2000_Rho63
+    } else if(ntrees==500 & ncol(X)==1000){
+      cbinom_dist = pmf_list$prob0.1$pmf_N500_Rho63
+    } else if(ntrees==1000 & ncol(X)==1000){
+      cbinom_dist = pmf_list$prob0.1$pmf_N1000_Rho63
+    } else if(ntrees==2000 & ncol(X)==1000){
+      cbinom_dist = pmf_list$prob0.1$pmf_N2000_Rho63
+    } else {
+      stop('The correlated binomial distribution is outside of the pre-specified parameters. Please re-calculate it using the correlbinom R package.')
+    }
+    
+  } else {
+    cbinom_dist = user_cbinom_dist
   }
 
   if(!is.data.frame(X)){
@@ -87,29 +114,6 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='bonferroni', ntrees=
   
   #### GIVES YOU Negative Log-Likelihood 
   #### for probaiblity ditrsitrubion
-  load('../Data/corr_binom_distributions.RData')
-  
-  if(ntrees==500 & ncol(X)==10){
-    cbinom_dist = pmf_list$prob0.1$pmf_N500_Rho63
-  } else if(ntrees==1000 & ncol(X)==10){
-    cbinom_dist = pmf_list$prob0.1$pmf_N1000_Rho63
-  } else if(ntrees==2000 & ncol(X)==10){
-    cbinom_dist = pmf_list$prob0.1$pmf_N2000_Rho63
-  } else if(ntrees==500 & ncol(X)==100){
-    cbinom_dist = pmf_list$prob0.1$pmf_N500_Rho63
-  } else if(ntrees==1000 & ncol(X)==100){
-    cbinom_dist = pmf_list$prob0.1$pmf_N1000_Rho63
-  } else if(ntrees==2000 & ncol(X)==100){
-    cbinom_dist = pmf_list$prob0.1$pmf_N2000_Rho63
-  } else if(ntrees==500 & ncol(X)==1000){
-    cbinom_dist = pmf_list$prob0.1$pmf_N500_Rho63
-  } else if(ntrees==1000 & ncol(X)==1000){
-    cbinom_dist = pmf_list$prob0.1$pmf_N1000_Rho63
-  } else if(ntrees==2000 & ncol(X)==1000){
-    cbinom_dist = pmf_list$prob0.1$pmf_N2000_Rho63
-  } else {
-    print('The correlated binomial distribution is outside of the pre-specified parameters. Please re-calculate it using the correlbinom R package.')
-  }
   
   cor.binomRF = data.table(melt(rc.main.effects))
   cor.binomRF = cor.binomRF[, list(freq=sum(value)), by='variable']
@@ -121,6 +125,8 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='bonferroni', ntrees=
   cor.binomRF$adjSignificance <- p.adjust(cor.binomRF$significance, method = fdr.method)
   
   cor.binomRF$Variable <- as.character(cor.binomRF$variable)
+  
+  cor.binomRF <- cor.binomRF[order(cor.binomRF$freq, decreasing=T)]
   
     if(keep.rf){
       return(list(binomRF = cor.binomRF,
