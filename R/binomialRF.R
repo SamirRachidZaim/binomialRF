@@ -54,6 +54,8 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, pe
     stop('keep.rf must be a boolean value. Set to T or F')
   } else if(fdr.threshold >1 | fdr.threshold <0){
     stop("fdr.threshold is outside the acceptable (0-1) range")
+  } else if(ntrees > 2000){
+    ntrees <- 2000
   }
   
   if(is.null(user_cbinom_dist)){
@@ -76,7 +78,7 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, pe
     } else if(ntrees==2000 & ncol(X)==1000){
       cbinom_dist = pmf_list$prob0.1$pmf_N2000_Rho63
     } else {
-      stop('The correlated binomial distribution is outside of the pre-specified parameters. Please re-calculate it using the correlbinom R package.')
+      stop('The correlated binomial distribution is outside of the pre-specified parameters. Please re-calculate it using the correlbinom R package. Setting ntrees to 2000')
     }
     
   } else {

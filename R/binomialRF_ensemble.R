@@ -25,7 +25,7 @@
 #' y = rbinom(100,1,pr)
 #'
 #' ###############################
-#' ### Run model averaging
+#' ### Run ensemble
 #' ###############################
 #'
 #' candidateModels <- list(
@@ -37,9 +37,9 @@
 #'       m6= c(paste("X",1:10,sep=''))
 #'       )
 #'
-#' .binomialRF_ensemble(candidateModels, X,y)
+#' binomialRF_ensemble(candidateModels, X,y)
 
-.binomialRF_ensemble <- function(candidateModels, X, y, ntrees=2000, percent_features=.2, PLOT=F){
+binomialRF_ensemble <- function(candidateModels, X, y, ntrees=2000, percent_features=.2, PLOT=F){
 
   if( !is.data.frame(X) ){
     X = data.frame(X)

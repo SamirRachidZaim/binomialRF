@@ -29,18 +29,18 @@
 #' y = rbinom(100,1,pr)
 #'
 #' ###############################
-#' ### Run model averaging
+#' ### Run interaction model
 #' ###############################
 #'
 #' K.binom.rf <-k_binomialRF(X,factor(y), fdr.threshold = .05,
-#'                           ntrees = 10000,percent_features = .3,
+#'                           ntrees = 2000,percent_features = .3,
 #'                           fdr.method = 'BY', K=2)
 #'
 #' print(K.binom.rf)
 #' @export
 
 
-k_binomialRF <- function(X,y , fdr.threshold=.0001, fdr.method='BH', ntrees=500, percent_features=sqrt(ncol(X)), keep.rf =FALSE, K=2){
+k_binomialRF <- function(X,y , fdr.threshold=0.05, fdr.method='BY', ntrees=2000, percent_features=0.3, keep.rf =FALSE, K=2){
 
   if(!is.numeric(ntrees)  | !is.numeric(percent_features)| !is.numeric(fdr.threshold)){
     stop("Error: threshold, ntrees, and percent_features should be numeric inputs")
