@@ -4,7 +4,6 @@ Title: Binomial Random Forest Feature Selection
 Version: 0.99.2
 Authors@R: person("Samir", "Rachid Zaim", email = "samirrachidzaim@email.arizona.edu",
   role = c("aut", "cre"))
-Maintainer: Samir Rachid Zaim <samirrachidzaim@email.arizona.edu>
 URL: https://www.biorxiv.org/content/10.1101/681973v1.abstract
 Description: The binomialRF is a new feature selection technique for decision trees that 
     aims at providing an alternative approach to identify significant feature subsets using binomial
@@ -13,7 +12,6 @@ Description: The binomialRF is a new feature selection technique for decision tr
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-Reference: Zaim, S.R., Kenost, C., Lussier, Y.A. and Zhang, H.H., 2019. binomialRF: Scalable Feature Selection and Screening for Random Forests to Identify Biomarkers and Their Interactions. bioRxiv, p.681973.
 biocViews: Software, GenePrediction, StatisticalMethod, DecisionTree,  DimensionReduction, ExperimentalDesign
 Imports: randomForest, ggplot2, data.table, stats, rlist, correlbinom, parallel, snowfall,Rmpfr, methods
 Suggests: 

@@ -85,9 +85,11 @@ knitr::kable(head(cbind(round(X,2),y), 10))
 # binomialRF Function Call
 
 ```{r echo=T, warning=F, message=F}
-binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 1000,percent_features = .3,
-                     fdr.method = 'BY')
+binom.rf <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
+                     ntrees = 2000,percent_features = 1,
+                     fdr.method = 'BY',correlationAdjustment =FALSE,
+                     user_cbinom_dist = NULL, sampsize = round(nrow(X)*.33)
+                     )
 print(binom.rf)
 
 ```
@@ -105,32 +107,13 @@ If you're working in a low-dimensional space, with $\textit{L}$ features, then p
 # set.seed(324)
 
 binom.rf <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 1000,percent_features = 1,
-                     fdr.method = 'BY')
-
-binom.rf2 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 1000,percent_features = .8,
-                     fdr.method = 'BY')
-
-binom.rf3 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 1000,percent_features = .5,
-                     fdr.method = 'BY')
-
-binom.rf4 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 1000,percent_features = .3,
-                     fdr.method = 'BY')
+                     ntrees = 2000,percent_features = 1,
+                     fdr.method = 'BY',correlationAdjustment =FALSE,
+                     user_cbinom_dist = NULL, sampsize = round(nrow(X)*.33)
+                     )
 
 cat('\n\nbinomialRF 100%\n\n')
 print(binom.rf)
-
-cat('\n\nbinomialRF 80%\n\n')
-print(binom.rf2)
-
-cat('\n\nbinomialRF 50%\n\n')
-print(binom.rf3)
-
-cat('\n\nbinomialRF 30%\n\n')
-print(binom.rf4)
 ```
 
 ## ntrees
@@ -142,12 +125,16 @@ We recommend growing at least 500 to 1,000 trees at a minimum so that the algori
 set.seed(324)
 
 binom.rf <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 500,percent_features = .3,
-                     fdr.method = 'BY')
+                     ntrees = 500,percent_features = 1,
+                     fdr.method = 'BY',correlationAdjustment =FALSE,
+                     user_cbinom_dist = NULL, sampsize = round(nrow(X)*.33)
+                     )
 
 binom.rf2 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 1000,percent_features = .3,
-                     fdr.method = 'BY')
+                     ntrees = 1000,percent_features = 1,
+                     fdr.method = 'BY',correlationAdjustment =FALSE,
+                     user_cbinom_dist = NULL, sampsize = round(nrow(X)*.33)
+                     )
 
 
 cat('\n\nbinomialRF 500 trees\n\n')
@@ -157,3 +144,8 @@ cat('\n\nbinomialRF 1000 trees \n\n')
 print(binom.rf2)
 
 ```
+
+
+## Correlation Adjustment
+
+The binomialRF runs a binomial exact test to determine significance. However, the binomial distribution assumes independent trials. Therefore, we offer both the naive binomial as well as a correlation adjustment based on the $\textit{correlbinom}$ R package for exchangeable but correlated binary trials. 

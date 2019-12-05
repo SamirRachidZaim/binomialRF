@@ -41,7 +41,7 @@ calculateBinomialP <- function(L, percent_features){
 #' @return If L is an integeter returns a probability value for selecting predictor Xj randomly
 #'
 #'
-.calculateBinomialP_Interaction <- function(L, percent_features, K=2){
+calculateBinomialP_Interaction <- function(L, percent_features, K=2){
 
   if(!is.numeric(L) | !is.numeric(percent_features)){
     stop("Error: L or percent_features not numeric inputs")

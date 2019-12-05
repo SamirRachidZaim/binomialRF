@@ -13,6 +13,8 @@
 #' @param percent_features what percentage of L do we subsample at each tree? Should be a proportion between (0,1)
 #' @param keep.rf should we keep the randomForest object?
 #' @param user_cbinom_dist insert either a pre-specified correlated binomial distribution or calculate one via the R package \code{correlbinom}.
+#' @param correlationAdjustment should we do a naive binomial or adjust for correlation
+#' @param sampsize how many samples should be included in each tree in the randomForest
 #'
 #' @references Zaim, SZ; Kenost, C.; Lussier, YA; Zhang, HH. binomialRF: Scalable Feature Selection and Screening for Random Forests to Identify Biomarkers and Their Interactions, bioRxiv, 2019.
 #'
@@ -37,14 +39,17 @@
 #'
 #' binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,fdr.method = 'BY',
 #'                       ntrees = 2000,percent_features = .5,
-#'                       keep.rf=FALSE, user_cbinom_dist=NULL)
+#'                       keep.rf=FALSE, user_cbinom_dist=NULL,
+#'                       correlationAdjustment=TRUE,
+#'                       sampsize=round(nrow(X)*.33))
 #'
 #' print(binom.rf)
 #' @export
 
 
-binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, percent_features=.5, keep.rf =FALSE, user_cbinom_dist=NULL){
+binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, percent_features=.5, keep.rf =FALSE,  user_cbinom_dist=NULL, correlationAdjustment=TRUE,sampsize=round(nrow(X)*.33)){
 
+  get('pmf_list')
   if(!is.numeric(ntrees)  | !is.numeric(percent_features)| !is.numeric(fdr.threshold)){
     stop("Error: threshold, ntrees, and percent_features should be numeric inputs")
   } else if( percent_features >1 | percent_features <0){
@@ -102,7 +107,7 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, pe
   ### need only grow 2 terminal nodes 
   ## for main effects to speed up computation
   
-  rf.object <- randomForest::randomForest(X,y, ntree = ntrees, mtry=m, keep.forest = TRUE, keep.inbag = TRUE,  replace=F , maxnodes = 2 )
+  rf.object <- randomForest::randomForest(X,y, ntree = ntrees, mtry=m, keep.forest = TRUE, keep.inbag = TRUE,  replace=F , maxnodes = 2 , sampsize=sampsize)
 
   p = calculateBinomialP(L,percent_features )
 
@@ -121,15 +126,22 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, pe
   cor.binomRF = data.table::data.table(data.table::melt(rc.main.effects))
   cor.binomRF = cor.binomRF[, list(freq=sum(value)), by='variable']
   
-  pmf <- cbinom_dist/ sum(cbinom_dist)
-  round(pmf,6)
-  cmf <- cumsum(pmf)
-  cor.binomRF$significance <- 1-cmf[cor.binomRF$freq]
-  cor.binomRF$adjSignificance <- stats::p.adjust(cor.binomRF$significance, method = fdr.method)
-  
-  cor.binomRF$Variable <- as.character(cor.binomRF$variable)
-  
-  cor.binomRF <- cor.binomRF[order(cor.binomRF$freq, decreasing=T)]
+  if(correlationAdjustment){
+    pmf <- cbinom_dist/ sum(cbinom_dist)
+    round(pmf,6)
+    cmf <- cumsum(pmf)
+    cor.binomRF$significance <- 1-cmf[cor.binomRF$freq]
+    cor.binomRF$adjSignificance <- stats::p.adjust(cor.binomRF$significance, method = fdr.method)
+    
+    cor.binomRF$Variable <- as.character(cor.binomRF$variable)
+    
+    cor.binomRF <- cor.binomRF[order(cor.binomRF$freq, decreasing=T)]
+  } else {
+    cor.binomRF$significance <- sapply(cor.binomRF$freq, function(zzz) binom.test(zzz, n=ntrees, p=p, alternative = 'greater')$p.value)
+    cor.binomRF$adjSignificance <- stats::p.adjust(cor.binomRF$significance, method = fdr.method)
+    cor.binomRF <- cor.binomRF[order(cor.binomRF$freq, decreasing=T)]
+    
+  }
   
     if(keep.rf){
       return(list(binomRF = cor.binomRF,

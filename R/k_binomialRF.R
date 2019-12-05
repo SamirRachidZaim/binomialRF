@@ -64,7 +64,7 @@
   }
 
   m = ceiling(percent_features*ncol(X)[1])
-  rf.object <- randomForest(X,y, ntree = ntrees, mtry=m, keep.forest = TRUE, keep.inbag = TRUE)
+  rf.object <- randomForest::randomForest(X,y, ntree = ntrees, mtry=m, keep.forest = TRUE, keep.inbag = TRUE)
 
   p = calculateBinomialP_Interaction(L,percent_features, K )
 
@@ -124,7 +124,7 @@
 
   interaction.list$Interaction <- do.call(paste, c(interaction.list, sep=" | "))
 
-  sum.list <- interaction.list[, .N , by =interaction.list$Interaction]
+  sum.list <- interaction.list[, data.table::.N , by =interaction.list$Interaction]
   sum.list$Pvalue <- as.numeric(sapply(sum.list$N, function(x) binom.test(x, n= ntrees, p, alternative='greater')$p.value))
   sum.list$Adj.Pval <- stats::p.adjust(sum.list$Pvalue, method = fdr.method)
   sum.list$Significant <- sum.list$Adj.Pval < fdr.threshold

@@ -23,6 +23,10 @@ binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY', ntrees = 2000,
 \item{keep.rf}{should we keep the randomForest object?}
 
 \item{user_cbinom_dist}{insert either a pre-specified correlated binomial distribution or calculate one via the R package \code{correlbinom}.}
+
+\item{correlationAdjustment}{should we do a naive binomial or adjust for correlation}
+
+\item{sampsize}{how many samples should be included in each tree in the randomForest}
 }
 \value{
 a data.frame with 4 columns: Feature Name, Frequency Selected, Probability of Selecting it randomly, Adjusted P-value based on \code{fdr.method}
@@ -49,7 +53,9 @@ y = as.factor(rbinom(100,1,pr))
 
 binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,fdr.method = 'BY',
                       ntrees = 2000,percent_features = .5,
-                      keep.rf=FALSE, user_cbinom_dist=NULL)
+                      keep.rf=FALSE, user_cbinom_dist=NULL,
+                      correlationAdjustment=TRUE,
+                      sampsize=round(nrow(X)*.33))
 
 print(binom.rf)
 }

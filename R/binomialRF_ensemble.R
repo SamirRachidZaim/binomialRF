@@ -96,16 +96,16 @@
 
   if(PLOT){
     
-    plt = ggplot(data=new.err.mat, aes(x=new.err.mat$model, y=new.err.mat$Variable,  fill=new.err.mat$Significant)) +
-      geom_tile(inherit.aes = FALSE , aes(x=new.err.mat$model,y=new.err.mat$Variable,fill=new.err.mat$Significant), position = position_identity())+
-      theme_minimal()+ labs(title='Feature Selection by Model',
+    plt = ggplot2::ggplot(data=new.err.mat, ggplot2::aes(x=new.err.mat$model, y=new.err.mat$Variable,  fill=new.err.mat$Significant)) +
+      ggplot2::geom_tile(inherit.aes = FALSE , ggplot2::aes(x=new.err.mat$model,y=new.err.mat$Variable,fill=new.err.mat$Significant), position = ggplot2::position_identity())+
+      ggplot2::theme_minimal()+ ggplot2::labs(title='Feature Selection by Model',
                                               x='Likeliest Candidate Model (OOB Error)',
                                               y='Feature',
                                               fill="Significant")+
-      theme(
-        plot.title = element_text(color="red", size=20, face="bold.italic"),
-        axis.title.x = element_text(color="blue", size=14, face="bold"),
-        axis.title.y = element_text(color="#993333", size=14, face="bold")
+      ggplot2::theme(
+        plot.title = ggplot2::element_text(color="red", size=20, face="bold.italic"),
+        axis.title.x = ggplot2::element_text(color="blue", size=14, face="bold"),
+        axis.title.y = ggplot2::element_text(color="#993333", size=14, face="bold")
       )
     
     print(plt)
