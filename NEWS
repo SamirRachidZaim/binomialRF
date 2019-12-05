@@ -9,4 +9,4 @@ Future work:
 ========================================================================
 binomialRF R Package 0.99.1
 
-* The binomialRF is a novel feature selection technique for decision trees that aims at providing more interpretive and statistically significant feature subsets using binomial distributional assumptions. Treating each splitting variable selection as a binomial process, binomialRF then tests whether a feature is selected more often than by random chance.
+* The binomialRF is a new feature selection technique for decision trees that aims at providing an alternative approach to identify significant feature subsets using binomial distributional assumptions. Treating each splitting variable selection as a binomial process, binomialRF then tests whether a feature is selected more often than by random chance.

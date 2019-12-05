@@ -4,8 +4,11 @@
 \alias{binomialRF}
 \title{random forest feature selection based on binomial exact test}
 \usage{
-binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY', ntrees = 2000,
-       percent_features = .5, keep.rf=FALSE, user_cbinom_dist=NULL)
+binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY',
+                      ntrees = 2000,percent_features = .5,
+                      keep.rf=FALSE, user_cbinom_dist=NULL,
+                      correlationAdjustment=TRUE,
+                      sampsize=round(nrow(X)*.33))
 }
 \arguments{
 \item{X}{design matrix}
@@ -51,7 +54,7 @@ y = as.factor(rbinom(100,1,pr))
 ### Run binomialRF
 ###############################
 
-binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,fdr.method = 'BY',
+binom.rf <-binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY',
                       ntrees = 2000,percent_features = .5,
                       keep.rf=FALSE, user_cbinom_dist=NULL,
                       correlationAdjustment=TRUE,

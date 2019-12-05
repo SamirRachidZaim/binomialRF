@@ -2,21 +2,14 @@ Package: binomialRF
 Type: Package
 Title: Binomial Random Forest Feature Selection
 Version: 0.99.2
-Authors@R: person("Samir", "Rachid Zaim", email = "samirrachidzaim@email.arizona.edu",
-  role = c("aut", "cre"))
+Authors@R: person("Samir", "Rachid Zaim", email = "samirrachidzaim@math.arizona.edu", role = c("aut", "cre"))
 URL: https://www.biorxiv.org/content/10.1101/681973v1.abstract
-Description: The binomialRF is a new feature selection technique for decision trees that 
-    aims at providing an alternative approach to identify significant feature subsets using binomial
-    distributional assumptions. Treating each splitting variable selection as a set of exchangeable correlated bernoulli trials,
-    binomialRF then tests whether a feature is selected more often than by random chance. 
+Description: The binomialRF is a new feature selection technique for decision trees that aims at providing an alternative approach to identify significant feature subsets using binomial distributional assumptions. Treating each splitting variable selection as a set of exchangeable correlated bernoulli trials, binomialRF then tests whether a feature is selected more often than by random chance. 
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
 biocViews: Software, GenePrediction, StatisticalMethod, DecisionTree,  DimensionReduction, ExperimentalDesign
 Imports: randomForest, ggplot2, data.table, stats, rlist, correlbinom, parallel, snowfall,Rmpfr, methods
-Suggests: 
-    foreach,
-    knitr,
-    rmarkdown
+Suggests: foreach, knitr, rmarkdown
 RoxygenNote: 6.1.1
 VignetteBuilder: knitr

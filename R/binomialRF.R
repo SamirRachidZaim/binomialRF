@@ -2,9 +2,12 @@
 #'
 #' \code{binomialRF} is the R implementation of the feature selection algorithm by (Zaim 2019)
 #' 
-#' @usage binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY', ntrees = 2000,
-#'        percent_features = .5, keep.rf=FALSE, user_cbinom_dist=NULL)
-#'
+#' @usage binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY',
+#'                       ntrees = 2000,percent_features = .5,
+#'                       keep.rf=FALSE, user_cbinom_dist=NULL,
+#'                       correlationAdjustment=TRUE,
+#'                       sampsize=round(nrow(X)*.33))
+#'                       
 #' @param X design matrix
 #' @param y class label
 #' @param fdr.threshold fdr.threshold for determining which set of features are significant
@@ -37,7 +40,7 @@
 #' ### Run binomialRF
 #' ###############################
 #'
-#' binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,fdr.method = 'BY',
+#' binom.rf <-binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY',
 #'                       ntrees = 2000,percent_features = .5,
 #'                       keep.rf=FALSE, user_cbinom_dist=NULL,
 #'                       correlationAdjustment=TRUE,
@@ -49,7 +52,7 @@
 
 binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, percent_features=.5, keep.rf =FALSE,  user_cbinom_dist=NULL, correlationAdjustment=TRUE,sampsize=round(nrow(X)*.33)){
 
-  get('pmf_list')
+  pmf_list = binomialRF::pmf_list
   if(!is.numeric(ntrees)  | !is.numeric(percent_features)| !is.numeric(fdr.threshold)){
     stop("Error: threshold, ntrees, and percent_features should be numeric inputs")
   } else if( percent_features >1 | percent_features <0){
@@ -113,8 +116,8 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, pe
 
   ## obtain root-node splitting variables
   main.effects <- data.table::data.table(rf.object$forest$bestvar[1,])
-  main.effects[ ,  value:=T]
-  main.effects[ ,  row.num:= 1:ntrees]
+  main.effects$value <- T
+  main.effects$row.num <- 1:ntrees
   
   rc.main.effects <- t(data.table::dcast(main.effects, idvar = 'V1', V1 ~ row.num))
   rc.main.effects <- data.frame(rc.main.effects[-1, ])
@@ -124,7 +127,7 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, pe
   #### for probaiblity ditrsitrubion
   
   cor.binomRF = data.table::data.table(data.table::melt(rc.main.effects))
-  cor.binomRF = cor.binomRF[, list(freq=sum(value)), by='variable']
+  cor.binomRF = cor.binomRF[, list(freq=sum(cor.binomRF$value)), by='variable']
   
   if(correlationAdjustment){
     pmf <- cbinom_dist/ sum(cbinom_dist)
