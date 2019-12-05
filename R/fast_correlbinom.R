@@ -1,4 +1,4 @@
-#' a binomialRf visualization for feature selection
+#' a parallelized version of correlbinom
 #'
 #' \code{.fast_correlbinom} experimental section on plotting feature selection
 #' @param rho what percentage of data are you subsampling
@@ -11,10 +11,6 @@
 
 .fast_correlbinom <- function (rho, successprob, trials, precision = 1024, model = "kuk") 
 {
-  
-  require(parallel)
-  require(snowfall)
-  require(correlbinom)
   
   
   if (is.na(rho) | is.na(successprob) | is.na(trials) | is.na(precision) | 
@@ -64,16 +60,16 @@
     return(sum(prob.diag[i:(trials + 1)] * coeffs) * Rmpfr::chooseMpfr(trials, 
                                                                        i - 1))
   }
-  return(Rmpfr::asNumeric(methods::new("mpfr", unlist(mclapply(1:(trials + 
+  return(Rmpfr::asNumeric(new("mpfr", unlist(parallel::mclapply(1:(trials + 
                                                            1), gen.elem)))))
 }
 
 .create_ref_distributions <- function(calculateDistributions){
 
   ## PROB =1/10 
-  system.time(pmf_N500_Rho63 <- fast_correlbinom(rho = .63,trials = 500, successprob = .1, precision = 1024))
-  system.time(pmf_N1000_Rho63 <- fast_correlbinom(rho = .63,trials = 1000, successprob = .1, precision = 1024))
-  system.time(pmf_N2000_Rho63 <- fast_correlbinom(rho = .63,trials = 2000, successprob = .1, precision = 1024))
+  system.time(pmf_N500_Rho63 <- .fast_correlbinom(rho = .63,trials = 500, successprob = .1, precision = 1024))
+  system.time(pmf_N1000_Rho63 <- .fast_correlbinom(rho = .63,trials = 1000, successprob = .1, precision = 1024))
+  system.time(pmf_N2000_Rho63 <- .fast_correlbinom(rho = .63,trials = 2000, successprob = .1, precision = 1024))
   
   pmf_list_prob0.1 <- list(pmf_N500_Rho63=pmf_N500_Rho63,
                            pmf_N1000_Rho63=pmf_N1000_Rho63,
@@ -81,9 +77,9 @@
   )
   
   ## PROB=1/100
-  system.time(pmf_N500_Rho63 <- fast_correlbinom(rho = .63,trials = 500, successprob = .01, precision = 1024))
-  system.time(pmf_N1000_Rho63 <- fast_correlbinom(rho = .63,trials = 1000, successprob = .01, precision = 1024))
-  system.time(pmf_N2000_Rho63 <- fast_correlbinom(rho = .63,trials = 2000, successprob = .01, precision = 1024))
+  system.time(pmf_N500_Rho63 <- .fast_correlbinom(rho = .63,trials = 500, successprob = .01, precision = 1024))
+  system.time(pmf_N1000_Rho63 <- .fast_correlbinom(rho = .63,trials = 1000, successprob = .01, precision = 1024))
+  system.time(pmf_N2000_Rho63 <- .fast_correlbinom(rho = .63,trials = 2000, successprob = .01, precision = 1024))
   
   pmf_list_prob0.01 <- list(pmf_N500_Rho63=pmf_N500_Rho63,
                             pmf_N1000_Rho63=pmf_N1000_Rho63,
@@ -91,9 +87,9 @@
   )
   
   ## PROB=1/1000
-  system.time(pmf_N500_Rho63  <- fast_correlbinom(rho = .63,trials = 500, successprob =  .001, precision = 1024))
-  system.time(pmf_N1000_Rho63 <- fast_correlbinom(rho = .63,trials = 1000, successprob = .001, precision = 1024))
-  system.time(pmf_N2000_Rho63 <- fast_correlbinom(rho = .63,trials = 2000, successprob = .001, precision = 1024))
+  system.time(pmf_N500_Rho63  <- .fast_correlbinom(rho = .63,trials = 500, successprob =  .001, precision = 1024))
+  system.time(pmf_N1000_Rho63 <- .fast_correlbinom(rho = .63,trials = 1000, successprob = .001, precision = 1024))
+  system.time(pmf_N2000_Rho63 <- .fast_correlbinom(rho = .63,trials = 2000, successprob = .001, precision = 1024))
   
   pmf_list_prob0.001 <- list(pmf_N500_Rho63=pmf_N500_Rho63,
                              pmf_N1000_Rho63=pmf_N1000_Rho63,

@@ -62,7 +62,7 @@ Since $\textit{binomialRF}$ is a wrapper algorithm that internally calls and gro
 
 ## Simulated Data
 
-```{r echo=T}
+```{r echo=T, warning=F, message=F}
 set.seed(324)
 
 ### Generate multivariate normal data in R10
@@ -84,9 +84,9 @@ knitr::kable(head(cbind(round(X,2),y), 10))
 
 # binomialRF Function Call
 
-```{r echo=T}
+```{r echo=T, warning=F, message=F}
 binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 10000,percent_features = .3,
+                     ntrees = 1000,percent_features = .3,
                      fdr.method = 'BY')
 print(binom.rf)
 
@@ -101,23 +101,23 @@ Note that since the binomial exact test is contingent on a test statistic measur
 If you're working in a low-dimensional space, with $\textit{L}$ features, then percent_features must be at least greater than $1/\textit{L}$. However, for optimal performance, percent_features will be increased to at least 3/L since otherwise when only 1 variable is selected at the splitting procedure, there is no binomial process since the single variable chosen is then the 'optimal' splitting variable. Therefore, consider setting percent_features to be equivalent to the mtry parameter in the randomForest to ensure that at least 2+ features are considered at each root node, but not large enough so that the same dominant feature gets chosen. 
 
 
-```{r echo=F}
+```{r echo=F, warning=F, message=F}
 # set.seed(324)
 
 binom.rf <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 10000,percent_features = 1,
+                     ntrees = 1000,percent_features = 1,
                      fdr.method = 'BY')
 
 binom.rf2 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 10000,percent_features = .8,
+                     ntrees = 1000,percent_features = .8,
                      fdr.method = 'BY')
 
 binom.rf3 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 10000,percent_features = .5,
+                     ntrees = 1000,percent_features = .5,
                      fdr.method = 'BY')
 
 binom.rf4 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 10000,percent_features = .3,
+                     ntrees = 1000,percent_features = .3,
                      fdr.method = 'BY')
 
 cat('\n\nbinomialRF 100%\n\n')
@@ -135,88 +135,25 @@ print(binom.rf4)
 
 ## ntrees
 
-We recommend growing at least 500 to 1,000 trees at a minimum so that the algorithm has a chance to stabilize. However, it is also worth mentioning that the number of trees must be grown in proportion to the number of features. 
-
-Simulation studies show so far that ntrees ~ 2,000 yields satisfactory results for P=10. The ntrees tuning parameter must be set in conjunction with the percent_features as these two are inter-connectedm as well as the number of true features in the model. 
+We recommend growing at least 500 to 1,000 trees at a minimum so that the algorithm has a chance to stabilize, but also recommend choosing ntrees as a function of the number of features in your dataset. The ntrees tuning parameter must be set in conjunction with the percent_features as these two are inter-connectedm as well as the number of true features in the model. 
 
 
-```{r echo=F}
+```{r echo=F, warning=F, message=F}
 set.seed(324)
 
 binom.rf <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 2000,percent_features = .3,
+                     ntrees = 500,percent_features = .3,
                      fdr.method = 'BY')
 
 binom.rf2 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 5000,percent_features = .3,
+                     ntrees = 1000,percent_features = .3,
                      fdr.method = 'BY')
 
-binom.rf4 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
-                     ntrees = 50000,percent_features = .3,
-                     fdr.method = 'BY')
 
-cat('\n\nbinomialRF 1000 trees\n\n')
+cat('\n\nbinomialRF 500 trees\n\n')
 print(binom.rf)
 
-cat('\n\nbinomialRF 5000 trees \n\n')
+cat('\n\nbinomialRF 1000 trees \n\n')
 print(binom.rf2)
 
-cat('\n\nbinomialRF 50000 trees\n\n')
-print(binom.rf4)
 ```
-
-# Visualizations and model averaging
-
-Given that it may not always be apparent what model is ideal, a nested set of candidate models may be proposed. Consider a design matrix 
-
-$$X_{10}\sim MNV(0, I_{10})$$ 
-
-and suppose you would like to consider the following set of candidate models and choose which is the most likely or accurate model? 
-
-$m1 = \begin{bmatrix} X_1& X_4 & X_6 & X_9 \end{bmatrix}$ 
-
-$m2 = \begin{bmatrix} X_1 & X_2 &  X_3 & X_4 & X_6  &X_9 \end{bmatrix}$ 
-
-$m3 = \begin{bmatrix} X_3 & X_4 & X_5 & X_6 & X_7  &X_8 &X_9 &X_{10} \end{bmatrix}$ 
-
-$m4 = \begin{bmatrix} X_5 & X_6 & X_7  &X_8 &X_9 \end{bmatrix}$ 
-
-$m5 = \begin{bmatrix} X_4 & X_5  &X_8 &X_{10} \end{bmatrix}$ 
-
-$\vdots$
-
-$m10 = \begin{bmatrix} X_1 & X_2 &  X_3 & X_4 & X_5 & X_6 & X_7  &X_8 &X_9 &X_{10} \end{bmatrix}$ 
-
-
-Then, the following visualization assess each of them and weighs them by Out of Bag Error. 
-
-
-
-```{r echo=F, fig.width=6, fig.height=4, message=F, warning=F}
-require(data.table)
-
- candidateModels <- list(
-       m1=  c('X1','X4','X6','X9'),
-       m2=  c(paste('X',c(1,2,3,4,6,9),sep='')),
-       m3=  c(paste("X", 3:10,sep='')),
-       m4=  c(paste("X", 5:9,sep='')),
-       m5=  c(paste("X", c(4,5,8,10),sep='')),
-       m6=  c(paste("X", sample.int(10, 5),sep='')),
-       m7=  c(paste("X", sample.int(10, 7),sep='')),
-       m8=  c(paste("X", sample.int(10, 7),sep='')),
-       m9=  c(paste("X", sample.int(10, 8),sep='')),
-       m10= c(paste("X",1:10,sep=''))
-       )
-
- a= binomialRF::binomialRF_modelAveraging(candidateModels, X,y,percent_features = .3, ntrees = 10000)
-
-```
-
-
-Equivalently, the information can be retrieved and analyzed via a tabular version of the model selection graph.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(a)
-```
-
-Empirical results suggesting that as the number of candidate models increases, the Proportion Selected ($X_j$) $\rightarrow$  1. That is, the limit of its selection proportion will approach 1 as the number of candidate models L goes to infinity (i.e.,  $Limit_{L\to∞}  \text{Proportion Selected} (X_j )\rightarrow 1)$. In practice, a variety of decision boundaries can be used (i.e., Proportion Selected (X_j) ≥ 0.5). However, as the number of candidate models increases, we expect that the Proportion Selected of 'true' features will be pushed closer and closer to 1, while that of noisy features will be pushed towards 0. Therefore, more stringent cutoffs can be used (Proportion Selected (X_j) ≥ 0.9, for example). However, despite the benefits shown in empirical studies, no theoretical results are available yet for model averaging with binomialRF. 

@@ -32,15 +32,9 @@
 #' ### Run interaction model
 #' ###############################
 #'
-#' K.binom.rf <-k_binomialRF(X,factor(y), fdr.threshold = .05,
-#'                           ntrees = 2000,percent_features = .3,
-#'                           fdr.method = 'BY', K=2)
-#'
-#' print(K.binom.rf)
-#' @export
 
 
-k_binomialRF <- function(X,y , fdr.threshold=0.05, fdr.method='BY', ntrees=2000, percent_features=0.3, keep.rf =FALSE, K=2){
+.k_binomialRF <- function(X,y , fdr.threshold=0.05, fdr.method='BY', ntrees=2000, percent_features=0.3, keep.rf =FALSE, K=2){
 
   if(!is.numeric(ntrees)  | !is.numeric(percent_features)| !is.numeric(fdr.threshold)){
     stop("Error: threshold, ntrees, and percent_features should be numeric inputs")
@@ -120,10 +114,10 @@ k_binomialRF <- function(X,y , fdr.threshold=0.05, fdr.method='BY', ntrees=2000,
   ## obtain root-node splitting variables
   interaction.list <- lapply(1:ntrees, function(zzz) findKInteractions(randomForest::getTree(rf.object, k = zzz), K))
 
-  interaction.list <- list.flatten(interaction.list)
+  interaction.list <- rlist::list.flatten(interaction.list)
   interaction.list <- do.call(rbind, interaction.list)
 
-  interaction.list <- data.table(interaction.list)
+  interaction.list <- data.table::data.table(interaction.list)
 
 
   #interaction.list <- interaction.list[interaction.list$V1!='X0',]
@@ -132,7 +126,7 @@ k_binomialRF <- function(X,y , fdr.threshold=0.05, fdr.method='BY', ntrees=2000,
 
   sum.list <- interaction.list[, .N , by =interaction.list$Interaction]
   sum.list$Pvalue <- as.numeric(sapply(sum.list$N, function(x) binom.test(x, n= ntrees, p, alternative='greater')$p.value))
-  sum.list$Adj.Pval <- p.adjust(sum.list$Pvalue, method = fdr.method)
+  sum.list$Adj.Pval <- stats::p.adjust(sum.list$Pvalue, method = fdr.method)
   sum.list$Significant <- sum.list$Adj.Pval < fdr.threshold
   sum.list <- sum.list[order(sum.list$Adj.Pval, decreasing = FALSE),]
 

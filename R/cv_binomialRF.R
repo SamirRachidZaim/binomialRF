@@ -1,13 +1,16 @@
 #' random forest feature selection based on binomial exact test
 #'
 #' \code{cv.binomialRF} is the cross-validated form of the \code{binomialRF}, where K-fold crossvalidation is conducted to assess the feature's significance. Using the \code{cvFolds}=K parameter, will result in a K-fold cross-validation where the data is 'chunked' into K-equally sized groups and then the averaged result is returned.
+#' 
+#' @usage cv_binomialRF(X,y, cvFolds=5, fdr.threshold = .05,
+#'                        fdr.method = 'BY',  ntrees = 2000,keep.rf=FALSE)
+#' 
 #' @param X design matrix
 #' @param y class label
 #' @param cvFolds how many times should we perform cross-validation
 #' @param fdr.threshold fdr.threshold for determining which set of features are significant
 #' @param fdr.method how should we adjust for multiple comparisons (i.e., \code{p.adjust.methods} =c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"))
 #' @param ntrees how many trees should be used to grow the \code{randomForest}? (Defaults to 5000)
-#' @param percent_features what percentage of L do we subsample at each tree? Should be a proportion between (0,1)
 #' @param keep.rf should we keep the randomForest object?
 #'
 #' @references Zaim, SZ; Kenost, C.; Lussier, YA; Zhang, HH. binomialRF: Scalable Feature Selection and Screening for Random Forests to Identify Biomarkers and Their Interactions, bioRxiv, 2019.
@@ -25,29 +28,26 @@
 #' trueBeta= c(rep(10,5), rep(0,5))
 #' z = 1 + X %*% trueBeta
 #' pr = 1/(1+exp(-z))
-#' y = rbinom(100,1,pr)
+#' y = as.factor(rbinom(100,1,pr))
 #'
 #' ###############################
 #' ### Run cross-validation
 #' ###############################
 #'
-#' binom.rf <-cv_binomialRF(X,factor(y), cvFolds=5, fdr.threshold = .05,
-#'                       ntrees = 2000,percent_features = .5,
-#'                       fdr.method = 'BY')
+#' binom.rf <-cv_binomialRF(X,y, cvFolds=5, fdr.threshold = .05,
+#'                       fdr.method = 'BY',  ntrees = 2000,keep.rf=FALSE)
 #'
 #' print(binom.rf)
 
-.cv_binomialRF <- function(X,y, cvFolds=5, fdr.threshold=.05, fdr.method='BY', ntrees=2000, percent_features=.5, keep.rf =FALSE){
+cv_binomialRF <- function(X,y, cvFolds=5, fdr.threshold=.05,  fdr.method='BY', ntrees=2000, keep.rf =FALSE){
   requireNamespace('randomForest')
   requireNamespace('data.table')
   requireNamespace('stats')
 
-  if(!is.numeric(ntrees)  | !is.numeric(percent_features)| !is.numeric(fdr.threshold)){
+  if(!is.numeric(ntrees)  | !is.numeric(fdr.threshold)){
     stop("Error: threshold, ntrees, and percent_features should be numeric inputs")
-  } else if( percent_features >1 | percent_features <0){
-    stop("percent_features is outside the acceptable (0-1) range")
   } else if(ntrees <2){
-    stop('L must be a positive integer >1')
+    stop('ntrees must be a positive integer >1')
   } else if(!fdr.method %in% c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none")){
     stop('Please select acceptable fdr method from ("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none")')
   } else if(!is.logical(keep.rf)){

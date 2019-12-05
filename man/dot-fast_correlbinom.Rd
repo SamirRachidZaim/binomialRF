@@ -2,7 +2,7 @@
 % Please edit documentation in R/fast_correlbinom.R
 \name{.fast_correlbinom}
 \alias{.fast_correlbinom}
-\title{a binomialRf visualization for feature selection}
+\title{a parallelized version of correlbinom}
 \usage{
 .fast_correlbinom(rho, successprob, trials, precision = 1024,
   model = "kuk")

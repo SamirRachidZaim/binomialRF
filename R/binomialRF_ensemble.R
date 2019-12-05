@@ -6,7 +6,7 @@
 #' @param X the design matrix X of predictors.
 #' @param y the outcome y as a factor variable.
 #' @param ntrees how many trees should be used to grow the \code{randomForest}? (Defaults to 5000)
-#' @param percent_features what percentage of L do we subsample at each tree? Should be a proportion between (0,1)
+#' @param PLOT should a graphical summary be released (boolean)
 #' @return a ggplot2 object comparison of different models
 
 #' @examples
@@ -37,9 +37,8 @@
 #'       m6= c(paste("X",1:10,sep=''))
 #'       )
 #'
-#' binomialRF_ensemble(candidateModels, X,y)
 
-binomialRF_ensemble <- function(candidateModels, X, y, ntrees=2000, percent_features=.2, PLOT=F){
+.binomialRF_ensemble <- function(candidateModels, X, y, ntrees=2000, PLOT=F){
 
   if( !is.data.frame(X) ){
     X = data.frame(X)
@@ -50,7 +49,10 @@ binomialRF_ensemble <- function(candidateModels, X, y, ntrees=2000, percent_feat
   dim.X = ncol(X)
 
   f <- function(i, candidateModels, X,y){
-    d= binomialRF::binomialRF(X[, candidateModels[[i]]], factor(y), percent_features = percent_features, ntrees = ntrees)
+    
+    tmp_cbinom_dist <- .fast_correlbinom(rho = .63,trials = ntrees, successprob = 1/length(candidateModels[[i]]), precision = 1024)
+    
+    d= binomialRF(X[, candidateModels[[i]]], factor(y), ntrees = ntrees, user_cbinom_dist =tmp_cbinom_dist)
     d$model = names(candidateModels)[i]
     return(d)
   }
@@ -94,16 +96,16 @@ binomialRF_ensemble <- function(candidateModels, X, y, ntrees=2000, percent_feat
 
   if(PLOT){
     
-    plt = ggplot2::ggplot(data=new.err.mat, ggplot2::aes(x=new.err.mat$model, y=new.err.mat$Variable,  fill=new.err.mat$Significant)) +
-      ggplot2::geom_tile(inherit.aes = FALSE , ggplot2::aes(x=new.err.mat$model,y=new.err.mat$Variable,fill=new.err.mat$Significant), position = ggplot2::position_identity())+
-      ggplot2::theme_minimal()+ ggplot2::labs(title='Feature Selection by Model',
+    plt = ggplot(data=new.err.mat, aes(x=new.err.mat$model, y=new.err.mat$Variable,  fill=new.err.mat$Significant)) +
+      geom_tile(inherit.aes = FALSE , aes(x=new.err.mat$model,y=new.err.mat$Variable,fill=new.err.mat$Significant), position = position_identity())+
+      theme_minimal()+ labs(title='Feature Selection by Model',
                                               x='Likeliest Candidate Model (OOB Error)',
                                               y='Feature',
                                               fill="Significant")+
-      ggplot2::theme(
-        plot.title = ggplot2::element_text(color="red", size=20, face="bold.italic"),
-        axis.title.x = ggplot2::element_text(color="blue", size=14, face="bold"),
-        axis.title.y = ggplot2::element_text(color="#993333", size=14, face="bold")
+      theme(
+        plot.title = element_text(color="red", size=20, face="bold.italic"),
+        axis.title.x = element_text(color="blue", size=14, face="bold"),
+        axis.title.y = element_text(color="#993333", size=14, face="bold")
       )
     
     print(plt)

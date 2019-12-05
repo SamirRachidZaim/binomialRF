@@ -6,7 +6,7 @@
 %%  ~~function to do ... ~~
 }
 \description{
-This data contains probability mass functions (pmf's) for correlated binary data for various parameters.
+This data contains probability mass functions (pmf's) for correlated binary data for various parameters. The sum of correlated exchangeable binary data is a generalization of the binomial distribution that deals with correlated trials. The correlation in decision trees occurs as the subsampling and bootstrapping step in random forests touch the same data, creating a co-dependency. This data contains some pre-calculated distributions for random forests with 500, 1000, and 2000 trees with 10, 100, and 1000 features. For more distributions, they can be calculated via the correlbinom R package.
 }
 \usage{
 pmf_list

@@ -1,12 +1,15 @@
 #' random forest feature selection based on binomial exact test
 #'
 #' \code{binomialRF} is the R implementation of the feature selection algorithm by (Zaim 2019)
+#' 
+#' @usage binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY', ntrees = 2000,
+#'        percent_features = .5, keep.rf=FALSE, user_cbinom_dist=NULL)
 #'
 #' @param X design matrix
 #' @param y class label
 #' @param fdr.threshold fdr.threshold for determining which set of features are significant
 #' @param fdr.method how should we adjust for multiple comparisons (i.e., \code{p.adjust.methods} =c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"))
-#' @param ntrees how many trees should be used to grow the \code{randomForest}? (Defaults to 5000)
+#' @param ntrees how many trees should be used to grow the \code{randomForest}? 
 #' @param percent_features what percentage of L do we subsample at each tree? Should be a proportion between (0,1)
 #' @param keep.rf should we keep the randomForest object?
 #' @param user_cbinom_dist insert either a pre-specified correlated binomial distribution or calculate one via the R package \code{correlbinom}.
@@ -32,9 +35,9 @@
 #' ### Run binomialRF
 #' ###############################
 #'
-#' binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,
+#' binom.rf <-binomialRF(X,factor(y), fdr.threshold = .05,fdr.method = 'BY',
 #'                       ntrees = 2000,percent_features = .5,
-#'                       fdr.method = 'BY',user_cbinom_dist=NULL)
+#'                       keep.rf=FALSE, user_cbinom_dist=NULL)
 #'
 #' print(binom.rf)
 #' @export
@@ -54,9 +57,7 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, pe
     stop('keep.rf must be a boolean value. Set to T or F')
   } else if(fdr.threshold >1 | fdr.threshold <0){
     stop("fdr.threshold is outside the acceptable (0-1) range")
-  } else if(ntrees > 2000){
-    ntrees <- 2000
-  }
+  } 
   
   if(is.null(user_cbinom_dist)){
     if(ntrees==500 & ncol(X)==10){
@@ -101,30 +102,30 @@ binomialRF <- function(X,y , fdr.threshold=.05, fdr.method='BY', ntrees=2000, pe
   ### need only grow 2 terminal nodes 
   ## for main effects to speed up computation
   
-  rf.object <- randomForest(X,y, ntree = ntrees, mtry=m, keep.forest = TRUE, keep.inbag = TRUE,  replace=F , maxnodes = 2 )
+  rf.object <- randomForest::randomForest(X,y, ntree = ntrees, mtry=m, keep.forest = TRUE, keep.inbag = TRUE,  replace=F , maxnodes = 2 )
 
   p = calculateBinomialP(L,percent_features )
 
   ## obtain root-node splitting variables
-  main.effects <- data.table(rf.object$forest$bestvar[1,])
-  main.effects[ , value:=T]
-  main.effects[ , row.num:= 1:ntrees]
+  main.effects <- data.table::data.table(rf.object$forest$bestvar[1,])
+  main.effects[ ,  value:=T]
+  main.effects[ ,  row.num:= 1:ntrees]
   
-  rc.main.effects <- t(dcast(main.effects, idvar = 'V1', V1 ~ row.num))
+  rc.main.effects <- t(data.table::dcast(main.effects, idvar = 'V1', V1 ~ row.num))
   rc.main.effects <- data.frame(rc.main.effects[-1, ])
   rc.main.effects[is.na(rc.main.effects)] <- 0
   
   #### GIVES YOU Negative Log-Likelihood 
   #### for probaiblity ditrsitrubion
   
-  cor.binomRF = data.table(melt(rc.main.effects))
+  cor.binomRF = data.table::data.table(data.table::melt(rc.main.effects))
   cor.binomRF = cor.binomRF[, list(freq=sum(value)), by='variable']
   
   pmf <- cbinom_dist/ sum(cbinom_dist)
   round(pmf,6)
   cmf <- cumsum(pmf)
   cor.binomRF$significance <- 1-cmf[cor.binomRF$freq]
-  cor.binomRF$adjSignificance <- p.adjust(cor.binomRF$significance, method = fdr.method)
+  cor.binomRF$adjSignificance <- stats::p.adjust(cor.binomRF$significance, method = fdr.method)
   
   cor.binomRF$Variable <- as.character(cor.binomRF$variable)
   
