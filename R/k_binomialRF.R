@@ -8,8 +8,9 @@
 #' @param fdr.method how should we adjust for multiple comparisons (i.e., \code{p.adjust.methods} =c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"))
 #' @param ntrees how many trees should be used to grow the \code{randomForest}? (Defaults to 5000)
 #' @param percent_features what percentage of L do we subsample at each tree? Should be a proportion between (0,1)
-#' @param keep.rf should we keep the randomForest object?
 #' @param K for multi-way interactions, how deep should the interactions be?
+#' @param cbinom_dist user-supplied correlated binomial distribution
+#' @param sampsize user-supplied sample size for random forest
 #'
 #' @references Zaim, SZ; Kenost, C.; Lussier, YA; Zhang, HH. binomialRF: Scalable Feature Selection and Screening for Random Forests to Identify Biomarkers and Their Interactions, bioRxiv, 2019.
 #'
@@ -31,10 +32,24 @@
 #' ###############################
 #' ### Run interaction model
 #' ###############################
+#' 
+#' rho = 0.33
+#' ntrees = 500
+#' cbinom = correlbinom::correlbinom(rho, successprob =  calculateBinomialP_Interaction(10, .5,2), 
+#'                                trials = ntrees, precision = 1024, model = 'kuk')
 #'
+#' k.binom.rf <-k_binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY',
+#'                       ntrees = ntrees,percent_features = .5,
+#'                       cbinom_dist=cbinom,
+#'                       sampsize=round(nrow(X)*rho))
+#'
+#'
+#' 
+#'
+#' @export
 
-
-.k_binomialRF <- function(X,y , fdr.threshold=0.05, fdr.method='BY', ntrees=2000, percent_features=0.3, keep.rf =FALSE, K=2){
+k_binomialRF <- function(X,y , fdr.threshold=0.05, fdr.method='BY', ntrees=2000, percent_features=0.3, K=2, cbinom_dist=NULL,
+                         sampsize = nrow(X) *.4){
 
   if(!is.numeric(ntrees)  | !is.numeric(percent_features)| !is.numeric(fdr.threshold)){
     stop("Error: threshold, ntrees, and percent_features should be numeric inputs")
@@ -44,12 +59,12 @@
     stop('L must be a positive integer >1')
   } else if(!fdr.method %in% c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none")){
     stop('Please select acceptable fdr method from ("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none")')
-  } else if(!is.logical(keep.rf)){
-    stop('keep.rf must be a boolean value. Set to T or F')
   } else if(fdr.threshold >1 | fdr.threshold <0){
     stop("fdr.threshold is outside the acceptable (0-1) range")
   } else if( !is.numeric(K) | K< 2){
     stop('K should be an integeer denoting the level of interaction. Make K > 2')
+  } else if(is.null(cbinom_dist)){
+    stop('user_cbinom_dist is NULL, please calculate the correlated distribution using the correlbinom package')
   }
 
   if(!is.data.frame(X)){
@@ -67,7 +82,6 @@
   rf.object <- randomForest::randomForest(X,y, ntree = ntrees, mtry=m, keep.forest = TRUE, keep.inbag = TRUE)
 
   p = calculateBinomialP_Interaction(L,percent_features, K )
-
 
   climbToRoot <- function(final.node, Tree, K) {
 
@@ -110,7 +124,6 @@
     return(pruned.interactions)
   }
 
-
   ## obtain root-node splitting variables
   interaction.list <- lapply(1:ntrees, function(zzz) findKInteractions(randomForest::getTree(rf.object, k = zzz), K))
 
@@ -119,23 +132,23 @@
 
   interaction.list <- data.table::data.table(interaction.list)
 
-
-  #interaction.list <- interaction.list[interaction.list$V1!='X0',]
+  
 
   interaction.list$Interaction <- do.call(paste, c(interaction.list, sep=" | "))
+  
+  sum.list<- data.frame(table(interaction.list$Interaction))
+  colnames(sum.list) <- c('Interaction','Frequency')
+  
+  ### calculate correlation adjusted binomial
+  pmf <- cbinom_dist/ sum(cbinom_dist)
+  cmf <- cumsum(pmf)
+  sum.list$significance <- 1-cmf[sum.list$Frequency]
+  
+  sum.list$adjSignificance <- stats::p.adjust(sum.list$significance, method = fdr.method)
+  sum.list$Interaction <- as.character(sum.list$Interaction)
+  
+  sum.list <- sum.list[order(sum.list$Frequency, decreasing=T),]
 
-  sum.list <- interaction.list[, data.table::.N , by =interaction.list$Interaction]
-  sum.list$Pvalue <- as.numeric(sapply(sum.list$N, function(x) binom.test(x, n= ntrees, p, alternative='greater')$p.value))
-  sum.list$Adj.Pval <- stats::p.adjust(sum.list$Pvalue, method = fdr.method)
-  sum.list$Significant <- sum.list$Adj.Pval < fdr.threshold
-  sum.list <- sum.list[order(sum.list$Adj.Pval, decreasing = FALSE),]
-
-  if(keep.rf){
-    return(list(binomRF = sum.list,
-                RF.object = rf.object,
-                OutOfBagError = colMeans(rf.object$err.rate)[1]))
-  } else{
-   return(FeatureSelection=sum.list)
-  }
+  return(FeatureSelection=sum.list)
 }
 

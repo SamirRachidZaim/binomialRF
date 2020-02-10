@@ -2,16 +2,13 @@
 #'
 #' \code{cv.binomialRF} is the cross-validated form of the \code{binomialRF}, where K-fold crossvalidation is conducted to assess the feature's significance. Using the \code{cvFolds}=K parameter, will result in a K-fold cross-validation where the data is 'chunked' into K-equally sized groups and then the averaged result is returned.
 #' 
-#' @usage cv_binomialRF(X,y, cvFolds=5, fdr.threshold = .05,
-#'                        fdr.method = 'BY',  ntrees = 2000,keep.rf=FALSE)
-#' 
 #' @param X design matrix
 #' @param y class label
 #' @param cvFolds how many times should we perform cross-validation
 #' @param fdr.threshold fdr.threshold for determining which set of features are significant
 #' @param fdr.method how should we adjust for multiple comparisons (i.e., \code{p.adjust.methods} =c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"))
 #' @param ntrees how many trees should be used to grow the \code{randomForest}? (Defaults to 5000)
-#' @param keep.rf should we keep the randomForest object?
+#' @param keep.both should we keep the naive binomialRF as well as the correlated adjustment
 #'
 #' @references Zaim, SZ; Kenost, C.; Lussier, YA; Zhang, HH. binomialRF: Scalable Feature Selection and Screening for Random Forests to Identify Biomarkers and Their Interactions, bioRxiv, 2019.
 #'
@@ -34,12 +31,8 @@
 #' ### Run cross-validation
 #' ###############################
 #'
-#' binom.rf <-cv_binomialRF(X,y, cvFolds=5, fdr.threshold = .05,
-#'                       fdr.method = 'BY',  ntrees = 2000,keep.rf=FALSE)
-#'
-#' print(binom.rf)
 
-cv_binomialRF <- function(X,y, cvFolds=5, fdr.threshold=.05,  fdr.method='BY', ntrees=2000, keep.rf =FALSE){
+.cv_binomialRF <- function(X,y, cvFolds=5, fdr.threshold=.05,  fdr.method='BY', ntrees=2000, keep.both =FALSE){
   requireNamespace('randomForest')
   requireNamespace('data.table')
   requireNamespace('stats')
@@ -50,8 +43,8 @@ cv_binomialRF <- function(X,y, cvFolds=5, fdr.threshold=.05,  fdr.method='BY', n
     stop('ntrees must be a positive integer >1')
   } else if(!fdr.method %in% c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none")){
     stop('Please select acceptable fdr method from ("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none")')
-  } else if(!is.logical(keep.rf)){
-    stop('keep.rf must be a boolean value. Set to T or F')
+  } else if(!is.logical(keep.both)){
+    stop('keep.both must be a boolean value. Set to T or F')
   } else if(fdr.threshold >1 | fdr.threshold <0){
     stop("fdr.threshold is outside the acceptable (0-1) range")
   }
@@ -64,11 +57,11 @@ cv_binomialRF <- function(X,y, cvFolds=5, fdr.threshold=.05,  fdr.method='BY', n
   percent_features= seq(0.1, 1, length.out    = cvFolds)
 
   cv.bigMat = sapply(1:cvFolds, function(i) max(binomialRF(X[(((i-1)*chunks)+1): ((i)*chunks),],factor(y[(((i-1)*chunks)+1): ((i)*chunks)]),
-                                           fdr.threshold, fdr.method, ntrees, percent_features[i] , keep.rf = FALSE)$weight))
+                                           fdr.threshold, fdr.method, ntrees, percent_features[i] , keep.both = FALSE)))
 
-  cv.best.index = which.max(cv.bigMat)
-  cv.bigMat = data.frame(OOB.Error = 1/cv.bigMat)
-  cv.bigMat$PercentFeatures = percent_features
+  # cv.best.index = which.max(cv.bigMat)
+  # cv.bigMat = data.frame(OOB.Error = 1/cv.bigMat)
+  # cv.bigMat$PercentFeatures = percent_features
 
   # cv.bigMat$cv.Pvalue[cv.bigMat$cv.Pvalue==0] <- '<.0001'
   # cv.bigMat$cv.AdjPvalue[cv.bigMat$cv.AdjPvalue==0] <- '<.0001'
