@@ -9,7 +9,7 @@ License: GPL-2
 Encoding: UTF-8
 LazyData: true
 biocViews: Software, GenePrediction, StatisticalMethod, DecisionTree,  DimensionReduction, ExperimentalDesign
-Imports: randomForest, ggplot2, data.table, stats, rlist, correlbinom, parallel,Rmpfr, methods
-Suggests: foreach, knitr, rmarkdown
+Imports: randomForest, ggplot2, data.table, stats, rlist, methods
+Suggests: foreach, knitr, rmarkdown, correlbinom
 RoxygenNote: 7.0.2
 VignetteBuilder: knitr

@@ -28,4 +28,3 @@ calculateBinomialP <- function(L, percent_features){
   prod.vector = sapply(1:m, function(x) (L-x)/(L-(x-1)))
   (1-prod(prod.vector))*(1/m)
 }
-

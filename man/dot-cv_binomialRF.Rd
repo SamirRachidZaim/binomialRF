@@ -4,15 +4,8 @@
 \alias{.cv_binomialRF}
 \title{random forest feature selection based on binomial exact test}
 \usage{
-.cv_binomialRF(
-  X,
-  y,
-  cvFolds = 5,
-  fdr.threshold = 0.05,
-  fdr.method = "BY",
-  ntrees = 2000,
-  keep.both = FALSE
-)
+.cv_binomialRF(X, y, cvFolds = 5, fdr.threshold = 0.05,
+  fdr.method = "BY", ntrees = 2000, keep.both = FALSE)
 }
 \arguments{
 \item{X}{design matrix}

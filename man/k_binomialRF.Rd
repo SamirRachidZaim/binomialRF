@@ -4,17 +4,9 @@
 \alias{k_binomialRF}
 \title{random forest feature selection based on binomial exact test}
 \usage{
-k_binomialRF(
-  X,
-  y,
-  fdr.threshold = 0.05,
-  fdr.method = "BY",
-  ntrees = 2000,
-  percent_features = 0.3,
-  K = 2,
-  cbinom_dist = NULL,
-  sampsize = nrow(X) * 0.4
-)
+k_binomialRF(X, y, fdr.threshold = 0.05, fdr.method = "BY",
+  ntrees = 2000, percent_features = 0.3, K = 2, cbinom_dist = NULL,
+  sampsize = nrow(X) * 0.4)
 }
 \arguments{
 \item{X}{design matrix}
@@ -58,9 +50,11 @@ y = rbinom(100,1,pr)
 ### Run interaction model
 ###############################
 
+require(correlbinom)
+
 rho = 0.33
 ntrees = 500
-cbinom = correlbinom::correlbinom(rho, successprob =  calculateBinomialP_Interaction(10, .5,2), 
+cbinom = correlbinom(rho, successprob =  calculateBinomialP_Interaction(10, .5,2), 
                                trials = ntrees, precision = 1024, model = 'kuk')
 
 k.binom.rf <-k_binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY',

@@ -33,9 +33,11 @@
 #' ### Run interaction model
 #' ###############################
 #' 
+#' require(correlbinom)
+#' 
 #' rho = 0.33
 #' ntrees = 500
-#' cbinom = correlbinom::correlbinom(rho, successprob =  calculateBinomialP_Interaction(10, .5,2), 
+#' cbinom = correlbinom(rho, successprob =  calculateBinomialP_Interaction(10, .5,2), 
 #'                                trials = ntrees, precision = 1024, model = 'kuk')
 #'
 #' k.binom.rf <-k_binomialRF(X,y, fdr.threshold = .05,fdr.method = 'BY',

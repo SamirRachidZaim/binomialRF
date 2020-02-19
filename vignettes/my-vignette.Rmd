@@ -90,10 +90,11 @@ knitr::kable(head(cbind(round(X,2),y), 10))
 Since the binomialRF requires a correlation adjustment to adjust for the tree-to-tree sampling correlation, we first generate the appropriately-parameterized stable correlated binomial distribution. Note, the correlbinom function call can take a while to execute for large number trials (i.e., trials > 1000). 
 
 ```{r echo=T, warning=F, message=F}
+require(correlbinom)
 rho = 0.33
 ntrees = 1000
 
-cbinom = correlbinom::correlbinom(rho, successprob =  1/ncol(X), trials = ntrees, 
+cbinom = correlbinom(rho, successprob =  1/ncol(X), trials = ntrees, 
                                   precision = 1024, model = 'kuk')
 
 ```
@@ -159,7 +160,7 @@ binom.rf1000 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
 rho = 0.33
 ntrees = 500
 
-cbinom = correlbinom::correlbinom(rho, successprob =  1/ncol(X), trials = ntrees, precision = 1024, model = 'kuk')
+cbinom = correlbinom(rho, successprob =  1/ncol(X), trials = ntrees, precision = 1024, model = 'kuk')
 
 binom.rf500 <- binomialRF::binomialRF(X,factor(y), fdr.threshold = .05,
                      ntrees = ntrees,percent_features = .5,
