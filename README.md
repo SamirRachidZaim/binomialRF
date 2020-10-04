@@ -32,5 +32,4 @@ These GitHub updates and features are experimental and will not be available in 
 
 # References: 
 
-The main manuscript is included as a preprint in bioRxiv: https://doi.org/10.1101/681973, and has also been submitted for consideration at Frontiers in Genetics. 
-
+The main manuscript can be found on BMC Bioinformatics: https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-020-03718-9.
