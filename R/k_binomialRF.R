@@ -134,23 +134,27 @@ k_binomialRF <- function(X,y , fdr.threshold=0.05, fdr.method='BY', ntrees=2000,
 
   interaction.list <- data.table::data.table(interaction.list)
 
-  
+  if(nrow(interaction.list) >0 ){
+    interaction.list$Interaction <- do.call(paste, c(interaction.list, sep=" | "))
+    
+    sum.list<- data.frame(table(interaction.list$Interaction))
+    colnames(sum.list) <- c('Interaction','Frequency')
+    
+    ### calculate correlation adjusted binomial
+    pmf <- cbinom_dist/ sum(cbinom_dist)
+    cmf <- cumsum(pmf)
+    sum.list$significance <- 1-cmf[sum.list$Frequency]
+    
+    sum.list$adjSignificance <- stats::p.adjust(sum.list$significance, method = fdr.method)
+    sum.list$Interaction <- as.character(sum.list$Interaction)
+    
+    sum.list <- sum.list[order(sum.list$Frequency, decreasing=T),]
+    
+    return(FeatureSelection=sum.list)
+  } else {
+    print('found no interactions')
+  }
 
-  interaction.list$Interaction <- do.call(paste, c(interaction.list, sep=" | "))
-  
-  sum.list<- data.frame(table(interaction.list$Interaction))
-  colnames(sum.list) <- c('Interaction','Frequency')
-  
-  ### calculate correlation adjusted binomial
-  pmf <- cbinom_dist/ sum(cbinom_dist)
-  cmf <- cumsum(pmf)
-  sum.list$significance <- 1-cmf[sum.list$Frequency]
-  
-  sum.list$adjSignificance <- stats::p.adjust(sum.list$significance, method = fdr.method)
-  sum.list$Interaction <- as.character(sum.list$Interaction)
-  
-  sum.list <- sum.list[order(sum.list$Frequency, decreasing=T),]
 
-  return(FeatureSelection=sum.list)
 }
 
